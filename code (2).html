@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- TÍTULO ATUALIZADO -->
+    <title>Controle de Negócio - Simples e Eficiente</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* CSS - A Alma Minimalista do Site (Marca: Controle de Negócio) */
+
+        :root {
+            --cor-primaria: #2c3e50;
+            --cor-secundaria: #3498db;
+            --cor-sucesso: #2ecc71;
+            --cor-alerta: #e74c3c;
+            --cor-fundo: #f4f7f9;
+            --cor-texto: #34495e;
+            --cor-cartao: #ffffff;
+            --sombra-suave: 0 4px 15px rgba(0, 0, 0, 0.05);
+            --borda-radius: 12px;
+            --transicao-suave: all 0.3s ease-in-out;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { font-size: 16px; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--cor-fundo);
+            color: var(--cor-texto);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            animation: fadeInPage 0.8s ease-in-out;
+        }
+
+        .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .logo h1 { font-size: 2.2rem; font-weight: 600; color: var(--cor-primaria); }
+        
+        /* ÍCONE ATUALIZADO */
+        .logo h1::before { 
+            content: '💼'; /* Trocado de 📦 para 💼 */
+            margin-right: 12px; 
+            font-size: 2rem; 
+        }
+        
+        .user-greeting {
+            font-size: 1.1rem; color: var(--cor-texto); cursor: pointer;
+            padding: 0.5rem 0.8rem; border-radius: 8px; transition: background-color 0.2s ease;
+        }
+        .user-greeting:hover { background-color: #e9eef1; }
+        #user-name { font-weight: 600; color: var(--cor-secundaria); }
+        
+        .card {
+            background-color: var(--cor-cartao); border-radius: var(--borda-radius);
+            padding: 1.5rem 2rem; margin-bottom: 1.5rem;
+            box-shadow: var(--sombra-suave); transition: var(--transicao-suave);
+        }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08); }
+        h2 { font-size: 1.2rem; font-weight: 500; margin-bottom: 1.5rem; color: var(--cor-primaria); opacity: 0.8; }
+        
+        .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        .action-btn {
+            display: flex; align-items: center; justify-content: center;
+            padding: 1.5rem; border-radius: var(--borda-radius);
+            text-decoration: none; color: var(--cor-cartao); font-size: 1.2rem;
+            font-weight: 500; transition: var(--transicao-suave);
+            box-shadow: var(--sombra-suave); cursor: pointer; border: none;
+        }
+        .action-btn:hover { transform: scale(1.03); filter: brightness(1.1); }
+        .action-btn.gasto { background: linear-gradient(45deg, var(--cor-alerta), #f1c40f); }
+        .action-btn.ganho { background: linear-gradient(45deg, var(--cor-sucesso), var(--cor-secundaria)); }
+        .action-btn span { font-size: 2rem; margin-right: 1rem; }
+
+        .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; text-align: center; }
+        .summary-item h3 { font-weight: 400; font-size: 1rem; opacity: 0.7; }
+        .summary-item p { font-size: 2.2rem; font-weight: 600; }
+
+        .transaction-list { list-style: none; }
+        .transaction-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1rem 0; border-bottom: 1px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+        .transaction-item:last-child { border-bottom: none; }
+        
+        .transaction-actions { display: flex; align-items: center; gap: 1rem; }
+        .delete-btn {
+            background: none; border: none; font-size: 1.2rem;
+            color: #bdc3c7; cursor: pointer; transition: color 0.2s, transform 0.2s;
+            padding: 5px; line-height: 1;
+        }
+        .transaction-item:hover .delete-btn { color: var(--cor-alerta); }
+        .delete-btn:hover { transform: scale(1.2); }
+
+        .transaction-details { display: flex; align-items: center; }
+        .transaction-icon { font-size: 1.5rem; margin-right: 1rem; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+        .transaction-icon.gasto { background-color: #fdecea; color: var(--cor-alerta); }
+        .transaction-icon.ganho { background-color: #eaf8f1; color: var(--cor-sucesso); }
+        .transaction-item .description { font-weight: 500; }
+        .transaction-item .date { font-size: 0.85rem; opacity: 0.6; }
+        .transaction-amount { font-size: 1.1rem; font-weight: 600; }
+        
+        .positive { color: var(--cor-sucesso); }
+        .negative { color: var(--cor-alerta); }
+        
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; z-index: 1000;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content {
+            background-color: var(--cor-cartao); padding: 2rem; border-radius: var(--borda-radius);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); width: 90%; max-width: 500px;
+            transform: scale(0.95); transition: transform 0.3s ease;
+        }
+        .modal-overlay.active .modal-content { transform: scale(1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        #modal-title { font-size: 1.5rem; color: var(--cor-primaria); }
+        .close-modal { font-size: 2rem; cursor: pointer; color: #aaa; transition: color 0.2s; line-height: 1; border: none; background: none; }
+        .close-modal:hover { color: var(--cor-alerta); }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+        .form-group input {
+            width: 100%; padding: 0.8rem; border: 1px solid #ccc; border-radius: 8px;
+            font-size: 1rem; font-family: 'Poppins', sans-serif; transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-group input:focus { outline: none; border-color: var(--cor-secundaria); box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2); }
+        .form-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
+        .form-btn { padding: 0.8rem 1.5rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 500; cursor: pointer; transition: var(--transicao-suave); }
+        .form-btn.save { background-color: var(--cor-sucesso); color: white; }
+        .form-btn.save:hover { filter: brightness(1.1); }
+        .form-btn.cancel { background-color: #e0e0e0; color: var(--cor-texto); }
+        .form-btn.cancel:hover { background-color: #d0d0d0; }
+
+        @keyframes fadeInPage { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        .new-transaction { animation: slideIn 0.5s ease-out; }
+        @keyframes fadeOut { to { opacity: 0; height: 0; padding: 0; margin: 0; border: 0; } }
+        .removing { animation: fadeOut 0.4s ease-out forwards; }
+
+        @media (max-width: 600px) {
+            html { font-size: 14px; }
+            .actions { grid-template-columns: 1fr; }
+            .card { padding: 1.5rem; }
+            header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <!-- NOME PRINCIPAL ATUALIZADO -->
+            <div class="logo"><h1>Controle de Negócio</h1></div>
+            <div class="user-greeting" id="user-greeting">Olá, <span id="user-name">Visitante</span>!</div>
+        </header>
+
+        <main>
+            <section class="actions">
+                <button class="action-btn gasto" id="add-gasto-btn"><span>-</span> Adicionar Despesa</button>
+                <button class="action-btn ganho" id="add-ganho-btn"><span>+</span> Adicionar Receita</button>
+            </section>
+            
+            <section class="card summary-card">
+                <h2>Resumo do Mês</h2>
+                <div class="summary">
+                    <div class="summary-item"><h3>Receitas</h3><p id="total-ganhos" class="positive">R$ 0,00</p></div>
+                    <div class="summary-item"><h3>Despesas</h3><p id="total-gastos" class="negative">R$ 0,00</p></div>
+                    <div class="summary-item"><h3>Saldo</h3><p id="saldo-mes">R$ 0,00</p></div>
+                </div>
+            </section>
+
+            <section class="card recent-transactions">
+                <h2>Últimos Lançamentos</h2>
+                <ul id="transaction-list" class="transaction-list"></ul>
+            </section>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Adicionar Transação</h2>
+                <button class="close-modal" id="close-modal-btn">&times;</button>
+            </div>
+            <form id="transaction-form">
+                <input type="hidden" id="transaction-type">
+                <div class="form-group"><label for="description">Descrição</label><input type="text" id="description" placeholder="Ex: Fornecedor de matéria-prima, Cliente Y" required></div>
+                <div class="form-group"><label for="amount">Valor</label><input type="number" id="amount" placeholder="0,00" step="0.01" required></div>
+                <div class="form-group"><label for="date">Data da Nota</label><input type="date" id="date" required></div>
+                <div class="form-group"><label for="file">Anexar Nota Fiscal (Opcional)</label><input type="file" id="file"></div>
+                <div class="form-actions">
+                    <button type="button" class="form-btn cancel" id="cancel-btn">Cancelar</button>
+                    <button type="submit" class="form-btn save">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // JAVASCRIPT - O Cérebro Inteligente do Site (Marca: Controle de Negócio)
+
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const DOM = {
+                totalGanhos: document.getElementById('total-ganhos'),
+                totalGastos: document.getElementById('total-gastos'),
+                saldoMes: document.getElementById('saldo-mes'),
+                transactionList: document.getElementById('transaction-list'),
+                modalOverlay: document.getElementById('modal-overlay'),
+                transactionForm: document.getElementById('transaction-form'),
+                modalTitle: document.getElementById('modal-title'),
+                transactionTypeInput: document.getElementById('transaction-type'),
+                userName: document.getElementById('user-name'),
+                userGreeting: document.getElementById('user-greeting'),
+                addGastoBtn: document.getElementById('add-gasto-btn'),
+                addGanhoBtn: document.getElementById('add-ganho-btn'),
+                closeModalBtn: document.getElementById('close-modal-btn'),
+                cancelBtn: document.getElementById('cancel-btn'),
+            };
+
+            let transactions = JSON.parse(localStorage.getItem('transactions_negocio')) || [];
+            if(transactions.length === 0) {
+                transactions = [
+                    { id: 1, type: 'ganho', description: 'Venda - Projeto Web Cliente XPTO', amount: 3500.00, date: '2023-10-25' },
+                    { id: 2, type: 'gasto', description: 'Compra de Material de Escritório', amount: 275.50, date: '2023-10-24' },
+                    { id: 3, type: 'gasto', description: 'Assinatura Software de Design', amount: 110.00, date: '2023-10-23' },
+                ];
+            }
+            
+            const App = {
+                init() {
+                    this.setupEventListeners();
+                    this.loadUserName();
+                    this.updateUI();
+                },
+
+                setupEventListeners() {
+                    DOM.userGreeting.addEventListener('click', this.promptUserName.bind(this));
+                    DOM.addGastoBtn.addEventListener('click', () => this.Modal.open('gasto'));
+                    DOM.addGanhoBtn.addEventListener('click', () => this.Modal.open('ganho'));
+                    DOM.closeModalBtn.addEventListener('click', this.Modal.close);
+                    DOM.cancelBtn.addEventListener('click', this.Modal.close);
+                    DOM.modalOverlay.addEventListener('click', (e) => { if (e.target === DOM.modalOverlay) this.Modal.close(); });
+                    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && DOM.modalOverlay.classList.contains('active')) this.Modal.close(); });
+                    DOM.transactionForm.addEventListener('submit', this.addTransaction.bind(this));
+                    DOM.transactionList.addEventListener('click', this.handleListClick.bind(this));
+                },
+
+                updateUI() {
+                    this.renderTransactions();
+                    this.updateSummary();
+                    this.updateLocalStorage();
+                },
+                
+                formatCurrency: (value) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+                updateLocalStorage: () => localStorage.setItem('transactions_negocio', JSON.stringify(transactions)),
+                loadUserName() {
+                    const savedName = localStorage.getItem('userName_negocio');
+                    DOM.userName.textContent = savedName || 'Meu Negócio';
+                },
+                promptUserName() {
+                    const currentName = DOM.userName.textContent === 'Meu Negócio' ? '' : DOM.userName.textContent;
+                    const newName = prompt('Qual o nome do seu negócio ou seu nome?', currentName);
+                    if (newName && newName.trim() !== '') {
+                        localStorage.setItem('userName_negocio', newName.trim());
+                        this.loadUserName();
+                    }
+                },
+                
+                Modal: {
+                    open(type) {
+                        DOM.transactionTypeInput.value = type;
+                        DOM.modalTitle.textContent = type === 'ganho' ? 'Adicionar Receita' : 'Adicionar Despesa';
+                        document.getElementById('date').valueAsDate = new Date();
+                        DOM.modalOverlay.classList.add('active');
+                        document.getElementById('description').focus();
+                    },
+                    close() {
+                        DOM.modalOverlay.classList.remove('active');
+                        DOM.transactionForm.reset();
+                    }
+                },
+
+                updateSummary() {
+                    const totalGanhos = transactions.filter(t => t.type === 'ganho').reduce((acc, t) => acc + t.amount, 0);
+                    const totalGastos = transactions.filter(t => t.type === 'gasto').reduce((acc, t) => acc + t.amount, 0);
+                    const saldo = totalGanhos - totalGastos;
+                    DOM.totalGanhos.textContent = this.formatCurrency(totalGanhos);
+                    DOM.totalGastos.textContent = this.formatCurrency(totalGastos);
+                    DOM.saldoMes.textContent = this.formatCurrency(saldo);
+                    DOM.saldoMes.className = saldo >= 0 ? 'positive' : 'negative';
+                },
+
+                renderTransactions() {
+                    DOM.transactionList.innerHTML = '';
+                    const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                    sortedTransactions.forEach(t => {
+                        const isGasto = t.type === 'gasto';
+                        const icon = isGasto ? '🧾' : '💵'; // Ícones mais de negócio
+                        const amountSign = isGasto ? '-' : '+';
+                        const amountClass = isGasto ? 'negative' : 'positive';
+                        const typeClass = isGasto ? 'gasto' : 'ganho';
+
+                        const listItem = document.createElement('li');
+                        listItem.classList.add('transaction-item');
+                        listItem.dataset.id = t.id;
+                        if (t.isNew) {
+                            listItem.classList.add('new-transaction');
+                            delete t.isNew;
+                        }
+                        
+                        listItem.innerHTML = `
+                            <div class="transaction-details">
+                                <div class="transaction-icon ${typeClass}">${icon}</div>
+                                <div>
+                                    <p class="description">${t.description}</p>
+                                    <p class="date">Data da nota: ${new Date(t.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</p>
+                                </div>
+                            </div>
+                            <div class="transaction-actions">
+                                <p class="transaction-amount ${amountClass}">${amountSign} ${this.formatCurrency(t.amount)}</p>
+                                <button class="delete-btn" title="Excluir lançamento">🗑️</button>
+                            </div>
+                        `;
+                        DOM.transactionList.appendChild(listItem);
+                    });
+                },
+
+                addTransaction(e) {
+                    e.preventDefault();
+                    const description = document.getElementById('description').value;
+                    const amount = parseFloat(document.getElementById('amount').value);
+                    const date = document.getElementById('date').value;
+                    const type = DOM.transactionTypeInput.value;
+
+                    if (description.trim() === '' || isNaN(amount) || amount <= 0 || date === '') {
+                        alert('Por favor, preencha todos os campos corretamente.');
+                        return;
+                    }
+
+                    const newTransaction = {
+                        id: Date.now(),
+                        type, description, amount, date,
+                        isNew: true
+                    };
+
+                    transactions.unshift(newTransaction);
+                    this.updateUI();
+                    this.Modal.close();
+                },
+                
+                handleListClick(e) {
+                    if (e.target.classList.contains('delete-btn')) {
+                        const listItem = e.target.closest('.transaction-item');
+                        const transactionId = Number(listItem.dataset.id);
+                        this.removeTransaction(transactionId, listItem);
+                    }
+                },
+
+                removeTransaction(id, element) {
+                    const confirmation = confirm('Tem certeza que deseja excluir este lançamento? Esta ação não pode ser desfeita.');
+                    if (!confirmation) return;
+
+                    element.classList.add('removing');
+                    element.addEventListener('animationend', () => {
+                        transactions = transactions.filter(t => t.id !== id);
+                        this.updateUI();
+                    });
+                }
+            };
+
+            App.init();
+
+        });
+    </script>
+</body>
+</html>
