@@ -22,10 +22,7 @@
             min-height: 100vh; margin: 0;
             transition: opacity 0.5s ease-in-out;
         }
-        /* NOVO: Adicionado para ocultar o corpo enquanto verifica o login */
-        body.auth-checking {
-            opacity: 0;
-        }
+        body.auth-checking { opacity: 0; }
         .login-container {
             background-color: var(--cor-cartao); padding: 2.5rem 3rem;
             border-radius: var(--borda-radius); box-shadow: var(--sombra-suave);
@@ -34,50 +31,29 @@
         }
         .login-header h1 { font-size: 2rem; font-weight: 600; color: var(--cor-primaria); margin-bottom: 0.5rem; }
         .login-header h1::before { content: '💼'; margin-right: 12px; }
-        .login-header p { color: var(--cor-texto); opacity: 0.8; margin-bottom: 2rem; }
+        .login-header p { color: var(--cor-texto); opacity: 0.8; margin-bottom: 2rem; transition: color 0.3s; }
         .form-group { margin-bottom: 1.5rem; text-align: left; }
         .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
-        .form-group input {
-            width: 100%; padding: 0.8rem 1rem; border: 1px solid #ccc;
-            border-radius: 8px; font-size: 1rem;
-        }
-        .form-group input:focus {
-            outline: none; border-color: var(--cor-secundaria);
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
-        }
-        .password-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
+        .form-group input { width: 100%; padding: 0.8rem 1rem; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; }
+        .form-group input:focus { outline: none; border-color: var(--cor-secundaria); box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2); }
+        .password-wrapper { position: relative; display: flex; align-items: center; }
         .password-wrapper input { padding-right: 3rem; }
-        .toggle-password {
-            position: absolute; right: 1rem; top: 50%;
-            transform: translateY(-50%); cursor: pointer;
-            font-size: 1.3rem; color: #aaa; user-select: none;
-        }
+        .toggle-password { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 1.3rem; color: #aaa; user-select: none; }
+        
+        /* ATUALIZADO: Estilos para as opções do formulário */
         .form-options {
             display: flex;
+            justify-content: space-between;
             align-items: center;
             margin-bottom: 1.5rem;
         }
-        .form-options label {
-            margin-left: 0.5rem;
-            font-weight: 400;
-            font-size: 0.9rem;
-            color: var(--cor-texto);
-            cursor: pointer;
-        }
-        .form-options input[type="checkbox"] {
-            width: auto;
-            cursor: pointer;
-        }
-        .form-btn {
-            width: 100%; padding: 1rem; border: none; border-radius: 8px;
-            background-color: var(--cor-secundaria); color: white;
-            font-size: 1.1rem; font-weight: 500; cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
+        .remember-me-group { display: flex; align-items: center; }
+        .remember-me-group label { margin-left: 0.5rem; font-weight: 400; font-size: 0.9rem; color: var(--cor-texto); cursor: pointer; }
+        .remember-me-group input[type="checkbox"] { width: auto; cursor: pointer; }
+        #forgot-password-link { font-size: 0.9rem; color: var(--cor-secundaria); text-decoration: none; cursor: pointer; }
+        #forgot-password-link:hover { text-decoration: underline; }
+
+        .form-btn { width: 100%; padding: 1rem; border: none; border-radius: 8px; background-color: var(--cor-secundaria); color: white; font-size: 1.1rem; font-weight: 500; cursor: pointer; transition: background-color 0.3s ease; }
         .form-btn:hover { background-color: #2980b9; }
         .toggle-form { margin-top: 1.5rem; color: var(--cor-texto); font-size: 0.9rem; }
         .toggle-form a { color: var(--cor-secundaria); text-decoration: none; font-weight: 600; cursor: pointer; }
@@ -85,7 +61,7 @@
         @keyframes fadeInPage { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
-<body class="auth-checking"> <!-- Inicia oculto -->
+<body class="auth-checking">
     <div class="login-container">
         <div class="login-header">
             <h1>Controle de Negócio</h1>
@@ -93,11 +69,11 @@
         </div>
         
         <form id="login-form">
-            <div class="form-group">
+            <div class="form-group" id="email-group">
                 <label for="email">Email</label>
                 <input type="email" id="email" required autocomplete="email">
             </div>
-            <div class="form-group">
+            <div class="form-group" id="password-group">
                 <label for="password">Senha</label>
                 <div class="password-wrapper">
                     <input type="password" id="password" required autocomplete="current-password">
@@ -105,9 +81,12 @@
                 </div>
             </div>
             
-            <div class="form-options" id="remember-me-container">
-                <input type="checkbox" id="remember-me" checked> <!-- Vem marcado por padrão -->
-                <label for="remember-me">Manter conectado</label>
+            <div class="form-options">
+                <div class="remember-me-group" id="remember-me-container">
+                    <input type="checkbox" id="remember-me" checked>
+                    <label for="remember-me">Manter conectado</label>
+                </div>
+                <a id="forgot-password-link">Esqueci a senha</a>
             </div>
 
             <button type="submit" class="form-btn" id="main-btn">Entrar</button>
@@ -120,111 +99,142 @@
         </div>
     </div>
 
-
 <script type="module">
   // 1. IMPORTAMOS AS FUNÇÕES QUE VAMOS USAR
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
   import { 
       getAuth, 
-      onAuthStateChanged, // NOVO: Importa a função chave
+      onAuthStateChanged,
       createUserWithEmailAndPassword, 
       signInWithEmailAndPassword,
+      sendPasswordResetEmail, // NOVO
       setPersistence,
       browserLocalPersistence,
       browserSessionPersistence
   } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
 
-  // 2. SUA CONFIGURAÇÃO DO FIREBASE
-  const firebaseConfig = {
-    apiKey: "AIzaSyAis9udhxjOP2I-7MzhgoXo6wbekWkkbF4",
-    authDomain: "controle-de-negocio2.firebaseapp.com",
-    projectId: "controle-de-negocio2",
-    storageBucket: "controle-de-negocio2.firebasestorage.app",
-    messagingSenderId: "382496322313",
-    appId: "1:382496322313:web:90eb6ef5efbcffcb3719d8"
-  };
+  // 2. CONFIGURAÇÃO DO FIREBASE
+  const firebaseConfig = { /* ...Sua config do Firebase... */ };
 
-  // 3. INICIALIZAMOS O FIREBASE E O SERVIÇO DE AUTENTICAÇÃO
+  // 3. INICIALIZAÇÃO
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
 
-  // --- NOVO: "GUARDA DE AUTENTICAÇÃO" ---
-  // Esta função é executada assim que a página carrega.
+  // 4. GUARDA DE AUTENTICAÇÃO
   onAuthStateChanged(auth, (user) => {
     if (user) {
-      // Se o usuário JÁ ESTÁ logado (sessão persistente), redireciona direto.
       window.location.href = 'dashboard.html';
     } else {
-      // Se NÃO HÁ usuário logado, mostra a página de login.
       document.body.classList.remove('auth-checking');
     }
   });
-  // --- FIM DO GUARDA ---
 
-  // 4. LÓGICA DA PÁGINA (agora executada apenas se não houver usuário logado)
+  // 5. LÓGICA DA PÁGINA
   const loginForm = document.getElementById('login-form');
   const formTitle = document.getElementById('form-title');
   const mainBtn = document.getElementById('main-btn');
   const toggleFormContainer = document.querySelector('.toggle-form');
   const errorMessage = document.getElementById('error-message');
   const passwordInput = document.getElementById('password');
+  const passwordGroup = document.getElementById('password-group');
   const togglePassword = document.getElementById('toggle-password');
   const rememberMeContainer = document.getElementById('remember-me-container');
+  const forgotPasswordLink = document.getElementById('forgot-password-link');
 
   let isLogin = true;
+  let isResetMode = false; // NOVO: Estado para modo de recuperação
+
+  function updateFormUI() {
+      errorMessage.style.display = 'none';
+      formTitle.style.color = 'var(--cor-texto)';
+      formTitle.style.opacity = '0.8';
+
+      if (isResetMode) {
+          formTitle.textContent = 'Recuperar Senha';
+          passwordGroup.style.display = 'none';
+          rememberMeContainer.style.display = 'none';
+          forgotPasswordLink.style.display = 'none';
+          mainBtn.textContent = 'Enviar Link de Recuperação';
+          toggleFormContainer.querySelector('p').innerHTML = '<a id="toggle-link">Voltar para o Login</a>';
+      } else if (isLogin) {
+          formTitle.textContent = 'Acesse sua conta para continuar';
+          passwordGroup.style.display = 'block';
+          rememberMeContainer.style.display = 'flex';
+          forgotPasswordLink.style.display = 'block';
+          mainBtn.textContent = 'Entrar';
+          toggleFormContainer.querySelector('p').innerHTML = 'Não tem uma conta? <a id="toggle-link">Crie uma agora</a>';
+      } else { // Modo de Cadastro
+          formTitle.textContent = 'Crie sua conta gratuitamente';
+          passwordGroup.style.display = 'block';
+          rememberMeContainer.style.display = 'none';
+          forgotPasswordLink.style.display = 'none';
+          mainBtn.textContent = 'Criar Conta';
+          toggleFormContainer.querySelector('p').innerHTML = 'Já tem uma conta? <a id="toggle-link">Acesse aqui</a>';
+      }
+  }
 
   togglePassword.addEventListener('click', () => {
       const isPassword = passwordInput.type === 'password';
       passwordInput.type = isPassword ? 'text' : 'password';
       togglePassword.textContent = isPassword ? '🙈' : '👁️';
   });
+  
+  forgotPasswordLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      isLogin = false;
+      isResetMode = true;
+      updateFormUI();
+  });
 
   toggleFormContainer.addEventListener('click', (event) => {
       if (event.target.id === 'toggle-link') {
           event.preventDefault();
-          isLogin = !isLogin;
-          errorMessage.style.display = 'none';
           loginForm.reset();
-
-          if (isLogin) {
-              formTitle.textContent = 'Acesse sua conta para continuar';
-              mainBtn.textContent = 'Entrar';
-              rememberMeContainer.style.display = 'flex';
-              toggleFormContainer.querySelector('p').innerHTML = 'Não tem uma conta? <a href="#" id="toggle-link">Crie uma agora</a>';
+          if(isResetMode) {
+            isResetMode = false;
+            isLogin = true;
           } else {
-              formTitle.textContent = 'Crie sua conta gratuitamente';
-              mainBtn.textContent = 'Criar Conta';
-              rememberMeContainer.style.display = 'none';
-              toggleFormContainer.querySelector('p').innerHTML = 'Já tem uma conta? <a href="#" id="toggle-link">Acesse aqui</a>';
+            isLogin = !isLogin;
           }
+          updateFormUI();
       }
   });
 
   loginForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const email = document.getElementById('email').value;
-      const password = passwordInput.value;
       errorMessage.style.display = 'none';
 
-      if (isLogin) {
+      if (isResetMode) {
+          // --- LÓGICA DE RECUPERAÇÃO DE SENHA ---
+          sendPasswordResetEmail(auth, email)
+              .then(() => {
+                  formTitle.textContent = 'Link enviado! Verifique seu e-mail.';
+                  formTitle.style.color = 'var(--cor-sucesso)';
+                  loginForm.style.display = 'none'; // Oculta o formulário
+              })
+              .catch((error) => {
+                  errorMessage.textContent = 'Não foi possível enviar o link. Verifique o e-mail digitado.';
+                  errorMessage.style.display = 'block';
+              });
+
+      } else if (isLogin) {
+          // --- LÓGICA DE LOGIN ---
+          const password = passwordInput.value;
           const rememberMe = document.getElementById('remember-me').checked;
           const persistenceType = rememberMe ? browserLocalPersistence : browserSessionPersistence;
-
           setPersistence(auth, persistenceType)
-              .then(() => {
-                  return signInWithEmailAndPassword(auth, email, password);
-              })
+              .then(() => signInWithEmailAndPassword(auth, email, password))
               .then((userCredential) => {
-                  // O redirecionamento será tratado pelo onAuthStateChanged, mas podemos fazer aqui também
                   window.location.href = 'dashboard.html';
               })
               .catch((error) => {
-                  console.error("Erro de login:", error.code, error.message);
                   errorMessage.textContent = "Email ou senha incorretos.";
                   errorMessage.style.display = 'block';
               });
 
-      } else {
+      } else { // Modo de Cadastro
+          const password = passwordInput.value;
           if (password.length < 6) {
                errorMessage.textContent = "A senha precisa ter pelo menos 6 caracteres.";
                errorMessage.style.display = 'block';
@@ -244,6 +254,9 @@
               });
       }
   });
+
+  // Chamar a função uma vez no início para garantir o estado correto
+  updateFormUI();
 </script>
 </body>
 </html>
