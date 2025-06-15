@@ -20,11 +20,11 @@
             font-family: 'Poppins', sans-serif; background-color: var(--cor-fundo);
             display: flex; align-items: center; justify-content: center;
             min-height: 100vh; margin: 0;
-            opacity: 0; /* Começa invisível */
+            opacity: 0;
             transition: opacity 0.5s ease-in-out;
         }
         body.visible {
-            opacity: 1; /* Torna visível após a verificação de auth */
+            opacity: 1;
         }
         .login-container {
             background-color: var(--cor-cartao); padding: 2.5rem 3rem;
@@ -52,7 +52,9 @@
         .form-btn:hover { background-color: #2980b9; }
         .toggle-form { margin-top: 1.5rem; color: var(--cor-texto); font-size: 0.9rem; }
         .toggle-form a { color: var(--cor-secundaria); text-decoration: none; font-weight: 600; cursor: pointer; }
-        .error-message { color: #e74c3c; margin-top: 1rem; display: none; }
+        .message { margin-top: 1rem; display: none; }
+        .message.error { color: #e74c3c; }
+        .message.success { color: var(--cor-sucesso); }
         @keyframes fadeInPage { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
@@ -87,7 +89,7 @@
             <button type="submit" class="form-btn" id="main-btn">Entrar</button>
         </form>
 
-        <p class="error-message" id="error-message"></p>
+        <p class="message" id="message-area"></p>
 
         <div class="toggle-form">
             <p id="toggle-text">Não tem uma conta? <a id="toggle-link">Crie uma agora</a></p>
@@ -120,22 +122,22 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
 
-  // 3. GUARDA DE AUTENTICAÇÃO (EXECUTADO PRIMEIRO)
+  // 3. GUARDA DE AUTENTICAÇÃO
   onAuthStateChanged(auth, (user) => {
     if (user) {
       window.location.replace('dashboard.html');
     } else {
-      document.body.classList.add('visible'); // Mostra a página de login
+      document.body.classList.add('visible');
     }
   });
 
-  // 4. LÓGICA DA PÁGINA (GARANTIDO QUE O DOM ESTÁ PRONTO)
+  // 4. LÓGICA DA PÁGINA
   document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
     const formTitle = document.getElementById('form-title');
     const mainBtn = document.getElementById('main-btn');
     const toggleFormContainer = document.querySelector('.toggle-form');
-    const errorMessage = document.getElementById('error-message');
+    const messageArea = document.getElementById('message-area');
     const passwordInput = document.getElementById('password');
     const passwordGroup = document.getElementById('password-group');
     const togglePassword = document.getElementById('toggle-password');
@@ -144,10 +146,14 @@
 
     let formState = 'login'; // 'login', 'register', 'reset'
 
+    function showMessage(text, type = 'error') {
+        messageArea.textContent = text;
+        messageArea.className = `message ${type}`;
+        messageArea.style.display = 'block';
+    }
+
     function updateFormUI() {
-        errorMessage.style.display = 'none';
-        formTitle.style.color = 'var(--cor-texto)';
-        formTitle.style.opacity = '0.8';
+        messageArea.style.display = 'none';
         loginForm.style.display = 'block';
 
         if (formState === 'reset') {
@@ -198,18 +204,20 @@
     loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const email = document.getElementById('email').value;
-        errorMessage.style.display = 'none';
+        messageArea.style.display = 'none';
 
         if (formState === 'reset') {
             sendPasswordResetEmail(auth, email)
                 .then(() => {
-                    formTitle.textContent = 'Link enviado! Verifique seu e-mail.';
-                    formTitle.style.color = 'var(--cor-sucesso)';
+                    showMessage('Link enviado! Verifique sua caixa de e-mail (e spam).', 'success');
                     loginForm.style.display = 'none';
                 })
                 .catch((error) => {
-                    errorMessage.textContent = 'Não foi possível enviar o link. Verifique o e-mail digitado.';
-                    errorMessage.style.display = 'block';
+                    if (error.code === 'auth/user-not-found') {
+                        showMessage('Email não cadastrado.');
+                    } else {
+                        showMessage('Ocorreu um erro ao enviar o e-mail.');
+                    }
                 });
         } else if (formState === 'login') {
             const password = passwordInput.value;
@@ -218,14 +226,12 @@
             setPersistence(auth, persistenceType)
                 .then(() => signInWithEmailAndPassword(auth, email, password))
                 .catch((error) => {
-                    errorMessage.textContent = "Email ou senha incorretos.";
-                    errorMessage.style.display = 'block';
+                    showMessage("Email ou senha incorretos.");
                 });
         } else { // formState === 'register'
             const password = passwordInput.value;
             if (password.length < 6) {
-                errorMessage.textContent = "A senha precisa ter pelo menos 6 caracteres.";
-                errorMessage.style.display = 'block';
+                showMessage("A senha precisa ter pelo menos 6 caracteres.");
                 return;
             }
             createUserWithEmailAndPassword(auth, email, password)
@@ -234,13 +240,12 @@
                     if (error.code === 'auth/email-already-in-use') {
                         friendlyMessage = "Este email já está sendo utilizado.";
                     }
-                    errorMessage.textContent = friendlyMessage;
-                    errorMessage.style.display = 'block';
+                    showMessage(friendlyMessage);
                 });
         }
     });
     
-    updateFormUI(); // Chama no início para configurar o estado inicial do formulário
+    updateFormUI();
   });
 </script>
 </body>
