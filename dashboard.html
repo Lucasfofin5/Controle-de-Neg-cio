@@ -5,6 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel - Controle de Negócio</title>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+document.getElementById('generate-pdf-btn').addEventListener('click', () => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    const totalGanhos = document.getElementById('total-ganhos').textContent;
+    const totalGastos = document.getElementById('total-gastos').textContent;
+    const saldoMes = document.getElementById('saldo-mes').textContent;
+
+    let y = 20;
+
+    doc.setFontSize(16);
+    doc.text('Relatório Financeiro - Controle de Negócio', 20, y);
+    y += 10;
+
+    doc.setFontSize(12);
+    doc.text(`Total de Receitas: ${totalGanhos}`, 20, y); y += 8;
+    doc.text(`Total de Despesas: ${totalGastos}`, 20, y); y += 8;
+    doc.text(`Saldo do Mês: ${saldoMes}`, 20, y); y += 10;
+
+    doc.save('Relatorio_Financeiro.pdf');
+});
+</script>
+
+    
     <!-- SCRIPT PARA CARREGAR O TEMA PREVIAMENTE E EVITAR FLASH -->
     <script>
         (function() {
@@ -227,6 +254,9 @@
                 </div>
             </section>
             <section class="card recent-transactions">
+                <button id="generate-pdf-btn" class="action-btn gasto" style="margin-top: 1rem;">
+  📄 Gerar Relatório PDF
+</button>
                 <h2>Últimos Lançamentos</h2>
                 <ul id="transaction-list" class="transaction-list"></ul>
             </section>
