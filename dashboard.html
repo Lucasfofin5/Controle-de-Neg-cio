@@ -5,16 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel - Controle de Negócio</title>
 
-    <!-- Biblioteca jsPDF para exportar PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- SCRIPT PARA CARREGAR O TEMA PREVIAMENTE E EVITAR FLASH -->
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme');
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
 
-    <!-- Seu CSS, fontes e restante da head original -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
     <style>
-        /* SEU CSS ORIGINAL MANTIDO (modo escuro, layout, etc) */
+        /* CSS ATUALIZADO PARA MODO ESCURO */
         :root {
             --cor-primaria: #2c3e50;
             --cor-secundaria: #3498db;
@@ -24,59 +31,252 @@
             --cor-texto: #34495e;
             --cor-cartao: #ffffff;
             --cor-borda: #e0e0e0;
+            --sombra-suave: 0 4px 15px rgba(0, 0, 0, 0.05);
+            --borda-radius: 12px;
+            --transicao-suave: all 0.3s ease-in-out;
         }
-        body { font-family: 'Poppins', sans-serif; background-color: var(--cor-fundo); color: var(--cor-texto); }
-        .action-btn { display: inline-block; padding: 1rem; border-radius: 8px; font-weight: bold; text-decoration: none; cursor: pointer; }
-        .ganho { background: linear-gradient(45deg, var(--cor-sucesso), var(--cor-secundaria)); color: white; }
-        .gasto { background: linear-gradient(45deg, var(--cor-alerta), #f1c40f); color: white; }
-        .card { background-color: var(--cor-cartao); padding: 1rem; margin-bottom: 1rem; border-radius: 8px; }
+        
+        html.dark-mode {
+            --cor-fundo: #161d2a;
+            --cor-cartao: #202b3f;
+            --cor-primaria: #e5e9f0;
+            --cor-texto: #bdc3c7;
+            --cor-borda: #3a4a64;
+            --sombra-suave: 0 4px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { font-size: 16px; }
+        body {
+            font-family: 'Poppins', sans-serif; background-color: var(--cor-fundo);
+            color: var(--cor-texto); line-height: 1.6; -webkit-font-smoothing: antialiased;
+            animation: fadeInPage 0.8s ease-in-out;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .logo h1 { font-size: 2.2rem; font-weight: 600; color: var(--cor-primaria); }
+        .logo h1::before { content: '💼'; margin-right: 12px; font-size: 2rem; }
+        
+        /* NOVO: Container para controles do cabeçalho */
+        .header-controls { display: flex; align-items: center; gap: 1rem; }
+
+        .user-greeting {
+            font-size: 1.1rem; color: var(--cor-texto); cursor: pointer;
+            padding: 0.5rem 0.8rem; border-radius: 8px; transition: background-color 0.2s ease;
+        }
+        .user-greeting:hover { background-color: rgba(0,0,0,0.05); }
+        html.dark-mode .user-greeting:hover { background-color: rgba(255,255,255,0.05); }
+
+        #user-email { font-weight: 600; color: var(--cor-secundaria); }
+        #logout-btn { margin-left:1rem; color: var(--cor-alerta); font-weight: 600; text-decoration: none; }
+        
+        /* NOVO: Estilo para o botão de tema */
+        .theme-toggle-btn {
+            background: none;
+            border: 2px solid var(--cor-borda);
+            color: var(--cor-texto);
+            border-radius: 50%;
+            width: 40px; height: 40px; font-size: 1.2rem;
+            cursor: pointer; transition: var(--transicao-suave);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .theme-toggle-btn:hover {
+            transform: scale(1.1) rotate(15deg);
+            border-color: var(--cor-secundaria);
+            color: var(--cor-secundaria);
+        }
+
+        .card {
+            background-color: var(--cor-cartao); border-radius: var(--borda-radius);
+            padding: 1.5rem 2rem; margin-bottom: 1.5rem;
+            box-shadow: var(--sombra-suave); transition: var(--transicao-suave);
+        }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+        html.dark-mode .card:hover { box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+
+        h2 { font-size: 1.2rem; font-weight: 500; margin-bottom: 1.5rem; color: var(--cor-primaria); opacity: 0.8; }
+        .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        .action-btn {
+            display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+            border-radius: var(--borda-radius); text-decoration: none; color: #fff; /* Cor do texto é sempre branca */
+            font-size: 1.2rem; font-weight: 500; transition: var(--transicao-suave);
+            box-shadow: var(--sombra-suave); cursor: pointer; border: none;
+        }
+        .action-btn:hover { transform: scale(1.03); filter: brightness(1.1); }
+        .action-btn.gasto { background: linear-gradient(45deg, var(--cor-alerta), #f1c40f); }
+        .action-btn.ganho { background: linear-gradient(45deg, var(--cor-sucesso), var(--cor-secundaria)); }
+        .action-btn span { font-size: 2rem; margin-right: 1rem; }
+        .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; text-align: center; }
+        .summary-item h3 { font-weight: 400; font-size: 1rem; opacity: 0.7; color: var(--cor-texto); }
+        .summary-item p { font-size: 2.2rem; font-weight: 600; }
+        
+        .transaction-list { list-style: none; }
+        .transaction-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1rem 0; border-bottom: 1px solid var(--cor-borda);
+            transition: all 0.3s ease;
+        }
+        .transaction-item:last-child { border-bottom: none; }
+        .delete-btn {
+            background: none; border: none; font-size: 1.2rem; color: #bdc3c7;
+            cursor: pointer; transition: color 0.2s, transform 0.2s; padding: 5px; line-height: 1;
+        }
+        .transaction-item:hover .delete-btn { color: var(--cor-alerta); }
+        .delete-btn:hover { transform: scale(1.2); }
+        
+        .transaction-details { display: flex; align-items: center; gap: 1rem; }
+        .transaction-icon { font-size: 1.5rem; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+        .transaction-icon.gasto { background-color: rgba(231, 76, 60, 0.1); color: var(--cor-alerta); }
+        .transaction-icon.ganho { background-color: rgba(46, 204, 113, 0.1); color: var(--cor-sucesso); }
+        .transaction-item .description { font-weight: 500; color: var(--cor-primaria); }
+        .transaction-item .date { font-size: 0.85rem; opacity: 0.6; }
+        .transaction-amount { font-size: 1.1rem; font-weight: 600; }
+        
+        .category-tag {
+            background-color: #ecf0f1; color: #7f8c8d; padding: 0.2rem 0.6rem;
+            border-radius: 10px; font-size: 0.75rem; font-weight: 500;
+            display: inline-block; margin-top: 4px; transition: var(--transicao-suave);
+        }
+        html.dark-mode .category-tag { background-color: #2c3e50; color: #95a5a6; }
+        
+        .positive { color: var(--cor-sucesso); }
+        .negative { color: var(--cor-alerta); }
+        
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; z-index: 1000;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content {
+            background-color: var(--cor-cartao); padding: 2rem; border-radius: var(--borda-radius);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); width: 90%; max-width: 500px;
+            transform: scale(0.95); transition: transform 0.3s ease;
+        }
+        .modal-overlay.active .modal-content { transform: scale(1); }
+        #modal-title { font-size: 1.5rem; color: var(--cor-primaria); }
+        
+        .form-group input, .form-group select {
+            width: 100%; padding: 0.8rem; border: 1px solid var(--cor-borda); border-radius: 8px;
+            font-size: 1rem; font-family: 'Poppins', sans-serif;
+            background-color: var(--cor-fundo); color: var(--cor-texto);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none; border-color: var(--cor-secundaria);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.25);
+        }
+        /* ...resto do CSS praticamente idêntico... */
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .close-modal { font-size: 2rem; cursor: pointer; color: #aaa; transition: color 0.2s; line-height: 1; border: none; background: none; }
+        .close-modal:hover { color: var(--cor-alerta); }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+        .form-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
+        .form-btn { padding: 0.8rem 1.5rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 500; cursor: pointer; transition: var(--transicao-suave); }
+        .form-btn.save { background-color: var(--cor-sucesso); color: white; }
+        .form-btn.save:hover { filter: brightness(1.1); }
+        .form-btn.cancel { background-color: #e0e0e0; color: var(--cor-texto); }
+        html.dark-mode .form-btn.cancel { background-color: #3a4a64; color: var(--cor-primaria); }
+        .form-btn.cancel:hover { filter: brightness(1.2); }
+        @keyframes fadeInPage { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 600px) {
+            html { font-size: 14px; }
+            .actions { grid-template-columns: 1fr; } .card { padding: 1.5rem; }
+            header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+            .header-controls { width: 100%; justify-content: space-between; }
+        }
     </style>
 </head>
 <body>
+    <div class="container">
+        <header>
+    <div class="logo">
+        <h1>
+            Controle de Negócio
+            <a href="https://store8.gofile.io/download/web/302c04bd-baee-4970-9af1-c3a49aaa9dd5/meuapp.apk" target="_blank" title="Baixar App APK" style="margin-left: 10px; font-size: 0.9rem; background-color: var(--cor-secundaria); color: #fff; padding: 4px 8px; border-radius: 6px; text-decoration: none;">
+                📲 APP
+            </a>
+        </h1>
+    </div>
+    <div class="header-controls">
 
-<div class="container">
-    <header>
-        <div class="logo"><h1>Controle de Negócio</h1></div>
-        <div class="header-controls">
-            <div class="user-greeting">
-                Olá, <span id="user-email">...</span>
-                <a href="#" id="logout-btn">Sair</a>
+                <div class="user-greeting">
+                    Olá, <span id="user-email">...</span>
+                    <a href="#" id="logout-btn">Sair</a>
+                </div>
+                <!-- NOVO: Botão de alternância de tema -->
+                <button id="theme-toggle-btn" title="Alterar tema">🌙</button>
             </div>
-            <button id="theme-toggle-btn" title="Alterar tema">🌙</button>
+        </header>
+
+        <main>
+            <!-- O resto do HTML é o mesmo -->
+            <section class="actions">
+                <button class="action-btn gasto" id="add-gasto-btn"><span>-</span> Adicionar Despesa</button>
+                <button class="action-btn ganho" id="add-ganho-btn"><span>+</span> Adicionar Receita</button>
+            </section>
+            <section class="card summary-card">
+                <h2>Resumo do Mês</h2>
+                <div class="summary">
+                    <div class="summary-item"><h3>Receitas</h3><p id="total-ganhos" class="positive">R$ 0,00</p></div>
+                    <div class="summary-item"><h3>Despesas</h3><p id="total-gastos" class="negative">R$ 0,00</p></div>
+                    <div class="summary-item"><h3>Saldo</h3><p id="saldo-mes">R$ 0,00</p></div>
+                </div>
+            </section>
+            <section class="card recent-transactions">
+                <h2>Últimos Lançamentos</h2>
+                <ul id="transaction-list" class="transaction-list"></ul>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal com campo de Categoria -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Adicionar Transação</h2>
+                <button class="close-modal" id="close-modal-btn">×</button>
+            </div>
+            <form id="transaction-form">
+                <input type="hidden" id="transaction-type">
+                <div class="form-group">
+                    <label for="description">Descrição</label>
+                    <input type="text" id="description" placeholder="Ex: Aluguel do escritório" required>
+                </div>
+                <div class="form-group">
+                    <label for="amount">Valor</label>
+                    <input type="number" id="amount" placeholder="0,00" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="category">Categoria</label>
+                    <select id="category" required>
+                        <option value="" disabled selected>Selecione uma categoria...</option>
+                        <option value="Fixas">Contas Fixas (Aluguel, Luz)</option>
+                        <option value="Fornecedores">Fornecedores</option>
+                        <option value="Marketing">Marketing</option>
+                        <option value="Pessoal">Pessoal / Salários</option>
+                        <option value="Impostos">Impostos</option>
+                        <option value="Outros">Outras Despesas</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="date">Data da Nota</label>
+                    <input type="date" id="date" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="form-btn cancel" id="cancel-btn">Cancelar</button>
+                    <button type="submit" class="form-btn save">Salvar</button>
+                </div>
+            </form>
         </div>
-    </header>
-
-    <main>
-        <section class="actions">
-            <button class="action-btn gasto" id="add-gasto-btn"><span>-</span> Adicionar Despesa</button>
-            <button class="action-btn ganho" id="add-ganho-btn"><span>+</span> Adicionar Receita</button>
-        </section>
-
-        <section class="card summary-card">
-            <h2>Resumo do Mês</h2>
-            <div class="summary">
-                <div class="summary-item"><h3>Receitas</h3><p id="total-ganhos" class="positive">R$ 0,00</p></div>
-                <div class="summary-item"><h3>Despesas</h3><p id="total-gastos" class="negative">R$ 0,00</p></div>
-                <div class="summary-item"><h3>Saldo</h3><p id="saldo-mes">R$ 0,00</p></div>
-            </div>
-
-            <!-- Botão Gerar PDF -->
-            <button id="generate-pdf-btn" class="action-btn ganho" style="margin-top: 1rem;">
-                📄 Gerar Relatório PDF
-            </button>
-        </section>
-
-        <section class="card recent-transactions">
-            <h2>Últimos Lançamentos</h2>
-            <ul id="transaction-list" class="transaction-list"></ul>
-        </section>
-    </main>
-</div>
-
-<!-- Seus scripts Firebase e funcionalidades existentes -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    </div>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
@@ -87,7 +287,7 @@
     apiKey: "AIzaSyAis9udhxjOP2I-7MzhgoXo6wbekWkkbF4",
     authDomain: "controle-de-negocio2.firebaseapp.com",
     projectId: "controle-de-negocio2",
-    storageBucket: "controle-de-negocio2.appspot.com",
+    storageBucket: "controle-de-negocio2.firebasestorage.app",
     messagingSenderId: "382496322313",
     appId: "1:382496322313:web:90eb6ef5efbcffcb3719d8"
   };
@@ -100,18 +300,27 @@
     let transactions = [];
     let currentUser = null;
 
+    // --- NOVO: LÓGICA DO MODO ESCURO ---
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
+    
+    // Define o ícone inicial do botão baseado no tema salvo
     if (localStorage.getItem('theme') === 'dark') {
         themeToggleBtn.textContent = '☀️';
-        document.documentElement.classList.add('dark-mode');
     }
 
     themeToggleBtn.addEventListener('click', () => {
         document.documentElement.classList.toggle('dark-mode');
         const isDarkMode = document.documentElement.classList.contains('dark-mode');
-        localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-        themeToggleBtn.textContent = isDarkMode ? '☀️' : '🌙';
+        
+        if (isDarkMode) {
+            localStorage.setItem('theme', 'dark');
+            themeToggleBtn.textContent = '☀️'; // Mudar para ícone de sol
+        } else {
+            localStorage.setItem('theme', 'light');
+            themeToggleBtn.textContent = '🌙'; // Mudar para ícone de lua
+        }
     });
+    // --- FIM DA LÓGICA DO MODO ESCURO ---
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
@@ -202,6 +411,7 @@
             document.getElementById('total-ganhos').textContent = this.formatCurrency(totalGanhos);
             document.getElementById('total-gastos').textContent = this.formatCurrency(totalGastos);
             document.getElementById('saldo-mes').textContent = this.formatCurrency(saldo);
+            document.getElementById('saldo-mes').className = saldo >= 0 ? 'positive' : 'negative';
         },
         Modal: {
             open(type) {
@@ -232,33 +442,14 @@
         },
         formatCurrency: (value) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
     };
-
+    
     document.getElementById('add-gasto-btn').addEventListener('click', () => App.Modal.open('gasto'));
     document.getElementById('add-ganho-btn').addEventListener('click', () => App.Modal.open('ganho'));
+    document.getElementById('close-modal-btn').addEventListener('click', App.Modal.close);
+    document.getElementById('cancel-btn').addEventListener('click', App.Modal.close);
+    document.getElementById('transaction-form').addEventListener('submit', (e) => App.addTransaction(e));
     document.getElementById('transaction-list').addEventListener('click', (e) => App.handleListClick(e));
-
-    // Função para gerar o PDF
-    document.getElementById('generate-pdf-btn').addEventListener('click', () => {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-
-        const totalGanhos = document.getElementById('total-ganhos').textContent;
-        const totalGastos = document.getElementById('total-gastos').textContent;
-        const saldoMes = document.getElementById('saldo-mes').textContent;
-
-        let y = 20;
-        doc.setFontSize(16);
-        doc.text('Relatório Financeiro - Controle de Negócio', 20, y);
-        y += 10;
-        doc.setFontSize(12);
-        doc.text(`Total de Receitas: ${totalGanhos}`, 20, y); y += 8;
-        doc.text(`Total de Despesas: ${totalGastos}`, 20, y); y += 8;
-        doc.text(`Saldo do Mês: ${saldoMes}`, 20, y);
-
-        doc.save('Relatorio_Financeiro.pdf');
-    });
   });
 </script>
-
 </body>
 </html>
