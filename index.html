@@ -5,67 +5,195 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Controle de Negócio</title>
 
+    <!-- SCRIPT PARA CARREGAR O TEMA PREVIAMENTE E EVITAR FLASH -->
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme');
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
+
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { 
-            --cor-primaria: #2c3e50; --cor-secundaria: #3498db; --cor-sucesso: #2ecc71;
-            --cor-fundo: #f4f7f9; --cor-texto: #34495e; --cor-cartao: #ffffff;
-            --sombra-suave: 0 4px 15px rgba(0, 0, 0, 0.08); --borda-radius: 12px;
+        :root {
+            --cor-primaria: #2c3e50;
+            --cor-secundaria: #3498db;
+            --cor-sucesso: #2ecc71;
+            --cor-fundo: #f4f7f9;
+            --cor-texto: #34495e;
+            --cor-cartao: #ffffff;
+            --cor-borda: #ccc;
+            --sombra-suave: 0 4px 15px rgba(0, 0, 0, 0.08);
+            --borda-radius: 12px;
         }
+
+        html.dark-mode {
+            --cor-fundo: #161d2a;
+            --cor-cartao: #202b3f;
+            --cor-primaria: #e5e9f0;
+            --cor-texto: #bdc3c7;
+            --cor-borda: #3a4a64;
+            --sombra-suave: 0 4px 20px rgba(0, 0, 0, 0.25);
+        }
+
         body {
             font-family: 'Poppins', sans-serif; background-color: var(--cor-fundo);
             display: flex; align-items: center; justify-content: center;
             min-height: 100vh; margin: 0;
             animation: fadeInPage 0.8s ease-in-out;
-            transition: background-color 0.3s, color 0.3s; /* NOVO */
+            transition: background-color 0.3s ease;
         }
         .login-container {
             background-color: var(--cor-cartao); padding: 2.5rem 3rem;
             border-radius: var(--borda-radius); box-shadow: var(--sombra-suave);
             width: 90%; max-width: 400px; text-align: center;
-            transition: background-color 0.3s; /* NOVO */
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
         }
-        /* ... outros estilos ... */
-
-        /* NOVO: Cores para o Modo Escuro na página de login */
-        body[data-theme="dark"] {
-            --cor-fundo: #2c3e50;
-            --cor-cartao: #34495e;
-            --cor-texto: #ecf0f1;
-            --cor-primaria: #ffffff;
-            --borda-padrao: #4a627a;
+        .login-header h1 { font-size: 2rem; font-weight: 600; color: var(--cor-primaria); margin-bottom: 0.5rem; }
+        .login-header h1::before { content: '💼'; margin-right: 12px; }
+        .login-header p { color: var(--cor-texto); opacity: 0.8; margin-bottom: 2rem; }
+        .form-group { margin-bottom: 1.5rem; text-align: left; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--cor-texto); }
+        .form-group input {
+            width: 100%; padding: 0.8rem 1rem; border: 1px solid var(--cor-borda);
+            border-radius: 8px; font-size: 1rem;
+            background-color: var(--cor-fundo);
+            color: var(--cor-primaria);
+            transition: all 0.3s ease;
         }
-        body[data-theme="dark"] .login-container {
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            border: 1px solid var(--borda-padrao);
+        .form-group input:focus {
+            outline: none; border-color: var(--cor-secundaria);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.25);
         }
-        body[data-theme="dark"] .form-group input {
-            background-color: #4a627a;
-            color: var(--cor-texto);
-            border-color: #5d7c99;
+        .form-btn {
+            width: 100%; padding: 1rem; border: none; border-radius: 8px;
+            background-color: var(--cor-secundaria); color: white;
+            font-size: 1.1rem; font-weight: 500; cursor: pointer;
+            transition: background-color 0.3s ease;
         }
+        .form-btn:hover { background-color: #2980b9; }
+        .toggle-form {
+            margin-top: 1.5rem; color: var(--cor-texto);
+            font-size: 0.9rem;
+        }
+        .toggle-form a {
+            color: var(--cor-secundaria); text-decoration: none;
+            font-weight: 600; cursor: pointer;
+        }
+        .error-message { color: #e74c3c; margin-top: 1rem; display: none; }
+        @keyframes fadeInPage { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body>
     <div class="login-container">
-        <!-- O HTML do login continua o mesmo -->
+        <div class="login-header">
+            <h1>Controle de Negócio</h1>
+            <p id="form-title">Acesse sua conta para continuar</p>
+        </div>
+        
+        <form id="login-form">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Senha</label>
+                <input type="password" id="password" required>
+            </div>
+            <button type="submit" class="form-btn" id="main-btn">Entrar</button>
+        </form>
+
+        <p class="error-message" id="error-message"></p>
+
+        <div class="toggle-form">
+            <p id="toggle-text">Não tem uma conta? <a id="toggle-link">Crie uma agora</a></p>
+        </div>
     </div>
 
-    <!-- NOVO: Pequeno script para aplicar o tema antes de tudo -->
-    <script>
-      const savedTheme = localStorage.getItem('theme');
-      if (savedTheme) {
-        document.body.setAttribute('data-theme', savedTheme);
-      }
-    </script>
 
-    <!-- O seu script principal do Firebase continua aqui -->
-    <script type="module">
-      // 1. IMPORTAMOS AS FUNÇÕES...
-      // O resto do seu script da página de login continua aqui, sem alterações.
-    </script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAis9udhxjOP2I-7MzhgoXo6wbekWkkbF4",
+    authDomain: "controle-de-negocio2.firebaseapp.com",
+    projectId: "controle-de-negocio2",
+    storageBucket: "controle-de-negocio2.firebasestorage.app",
+    messagingSenderId: "382496322313",
+    appId: "1:382496322313:web:90eb6ef5efbcffcb3719d8"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  const loginForm = document.getElementById('login-form');
+  const formTitle = document.getElementById('form-title');
+  const mainBtn = document.getElementById('main-btn');
+  const toggleFormContainer = document.querySelector('.toggle-form');
+  const errorMessage = document.getElementById('error-message');
+
+  let isLogin = true;
+
+  toggleFormContainer.addEventListener('click', (event) => {
+      if (event.target.id === 'toggle-link') {
+          event.preventDefault();
+          isLogin = !isLogin;
+          errorMessage.style.display = 'none';
+
+          if (isLogin) {
+              formTitle.textContent = 'Acesse sua conta para continuar';
+              mainBtn.textContent = 'Entrar';
+              toggleFormContainer.querySelector('p').innerHTML = 'Não tem uma conta? <a href="#" id="toggle-link">Crie uma agora</a>';
+          } else {
+              formTitle.textContent = 'Crie sua conta gratuitamente';
+              mainBtn.textContent = 'Criar Conta';
+              toggleFormContainer.querySelector('p').innerHTML = 'Já tem uma conta? <a href="#" id="toggle-link">Acesse aqui</a>';
+          }
+      }
+  });
+
+  loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      errorMessage.style.display = 'none';
+
+      if (isLogin) {
+          signInWithEmailAndPassword(auth, email, password)
+              .then((userCredential) => {
+                  window.location.href = 'dashboard.html';
+              })
+              .catch((error) => {
+                  errorMessage.textContent = "Email ou senha incorretos.";
+                  errorMessage.style.display = 'block';
+              });
+      } else {
+          if (password.length < 6) {
+               errorMessage.textContent = "A senha precisa ter pelo menos 6 caracteres.";
+               errorMessage.style.display = 'block';
+               return;
+          }
+          createUserWithEmailAndPassword(auth, email, password)
+              .then((userCredential) => {
+                  window.location.href = 'dashboard.html';
+              })
+              .catch((error) => {
+                  let friendlyMessage = "Ocorreu um erro. Tente novamente.";
+                  if (error.code == 'auth/email-already-in-use') {
+                      friendlyMessage = "Este email já está sendo utilizado.";
+                  }
+                  errorMessage.textContent = friendlyMessage;
+                  errorMessage.style.display = 'block';
+              });
+      }
+  });
+</script>
 </body>
 </html>
