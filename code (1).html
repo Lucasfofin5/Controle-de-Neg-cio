@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Controle de Negócio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { /* Usando as mesmas variáveis de design */
+            --cor-primaria: #2c3e50; --cor-secundaria: #3498db; --cor-sucesso: #2ecc71;
+            --cor-fundo: #f4f7f9; --cor-texto: #34495e; --cor-cartao: #ffffff;
+            --sombra-suave: 0 4px 15px rgba(0, 0, 0, 0.08); --borda-radius: 12px;
+        }
+        body {
+            font-family: 'Poppins', sans-serif; background-color: var(--cor-fundo);
+            display: flex; align-items: center; justify-content: center;
+            min-height: 100vh; margin: 0;
+            animation: fadeInPage 0.8s ease-in-out;
+        }
+        .login-container {
+            background-color: var(--cor-cartao); padding: 2.5rem 3rem;
+            border-radius: var(--borda-radius); box-shadow: var(--sombra-suave);
+            width: 90%; max-width: 400px; text-align: center;
+        }
+        .login-header h1 { font-size: 2rem; font-weight: 600; color: var(--cor-primaria); margin-bottom: 0.5rem; }
+        .login-header h1::before { content: '💼'; margin-right: 12px; }
+        .login-header p { color: var(--cor-texto); opacity: 0.8; margin-bottom: 2rem; }
+        .form-group { margin-bottom: 1.5rem; text-align: left; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+        .form-group input {
+            width: 100%; padding: 0.8rem 1rem; border: 1px solid #ccc;
+            border-radius: 8px; font-size: 1rem;
+        }
+        .form-group input:focus {
+            outline: none; border-color: var(--cor-secundaria);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        .form-btn {
+            width: 100%; padding: 1rem; border: none; border-radius: 8px;
+            background-color: var(--cor-secundaria); color: white;
+            font-size: 1.1rem; font-weight: 500; cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .form-btn:hover { background-color: #2980b9; }
+        .toggle-form {
+            margin-top: 1.5rem; color: var(--cor-texto);
+            font-size: 0.9rem;
+        }
+        .toggle-form a {
+            color: var(--cor-secundaria); text-decoration: none;
+            font-weight: 600; cursor: pointer;
+        }
+        .error-message { color: #e74c3c; margin-top: 1rem; display: none; }
+        @keyframes fadeInPage { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>Controle de Negócio</h1>
+            <p id="form-title">Acesse sua conta para continuar</p>
+        </div>
+        
+        <form id="login-form">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Senha</label>
+                <input type="password" id="password" required>
+            </div>
+            <button type="submit" class="form-btn" id="main-btn">Entrar</button>
+        </form>
+
+        <p class="error-message" id="error-message"></p>
+
+        <div class="toggle-form">
+            <p id="toggle-text">Não tem uma conta? <a id="toggle-link">Crie uma agora</a></p>
+        </div>
+    </div>
+
+    <script>
+        // LÓGICA DO FRONTEND PARA A PÁGINA DE LOGIN
+        // AINDA SEM FIREBASE, APENAS A INTERFACE
+        const loginForm = document.getElementById('login-form');
+        const formTitle = document.getElementById('form-title');
+        const mainBtn = document.getElementById('main-btn');
+        const toggleText = document.getElementById('toggle-text');
+        const toggleLink = document.getElementById('toggle-link');
+        const errorMessage = document.getElementById('error-message');
+
+        let isLogin = true;
+
+        toggleLink.addEventListener('click', () => {
+            isLogin = !isLogin;
+            errorMessage.style.display = 'none'; // Esconde erros ao trocar
+
+            if (isLogin) {
+                formTitle.textContent = 'Acesse sua conta para continuar';
+                mainBtn.textContent = 'Entrar';
+                toggleText.innerHTML = 'Não tem uma conta? <a id="toggle-link">Crie uma agora</a>';
+            } else {
+                formTitle.textContent = 'Crie sua conta gratuitamente';
+                mainBtn.textContent = 'Criar Conta';
+                toggleText.innerHTML = 'Já tem uma conta? <a id="toggle-link">Acesse aqui</a>';
+            }
+            // Re-adiciona o listener ao novo link
+            document.getElementById('toggle-link').addEventListener('click', toggleLink.click);
+        });
+        
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            // *** PONTO DE INTEGRAÇÃO COM FIREBASE ***
+            if (isLogin) {
+                console.log('Tentando fazer login com:', email, password);
+                // Aqui entraria: firebase.auth().signInWithEmailAndPassword(email, password)...
+                // Se der certo, redireciona para index.html
+                // Se der errado, mostra erro no errorMessage.
+                alert('Funcionalidade de Login (simulada). Redirecionando...');
+                window.location.href = 'index.html'; // Simulação de sucesso
+            } else {
+                console.log('Tentando criar conta com:', email, password);
+                // Aqui entraria: firebase.auth().createUserWithEmailAndPassword(email, password)...
+                // Se der certo, redireciona para index.html
+                // Se der errado, mostra erro no errorMessage.
+                alert('Funcionalidade de Criação de Conta (simulada). Redirecionando...');
+                window.location.href = 'index.html'; // Simulação de sucesso
+            }
+        });
+    </script>
+</body>
+</html>
