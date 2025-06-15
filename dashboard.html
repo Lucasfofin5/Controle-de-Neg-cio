@@ -168,7 +168,6 @@
             outline: none; border-color: var(--cor-secundaria);
             box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.25);
         }
-        /* ...resto do CSS praticamente idêntico... */
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
         .close-modal { font-size: 2rem; cursor: pointer; color: #aaa; transition: color 0.2s; line-height: 1; border: none; background: none; }
         .close-modal:hover { color: var(--cor-alerta); }
@@ -193,27 +192,24 @@
 <body>
     <div class="container">
         <header>
-    <div class="logo">
-        <h1>
-            Controle de Negócio
-            <a href="https://store8.gofile.io/download/web/302c04bd-baee-4970-9af1-c3a49aaa9dd5/meuapp.apk" target="_blank" title="Baixar App APK" style="margin-left: 10px; font-size: 0.9rem; background-color: var(--cor-secundaria); color: #fff; padding: 4px 8px; border-radius: 6px; text-decoration: none;">
-                📲 APP
-            </a>
-        </h1>
-    </div>
-    <div class="header-controls">
-
+            <div class="logo">
+                <h1>
+                    Controle de Negócio
+                    <a href="https://store8.gofile.io/download/web/302c04bd-baee-4970-9af1-c3a49aaa9dd5/meuapp.apk" target="_blank" title="Baixar App APK" style="margin-left: 10px; font-size: 0.9rem; background-color: var(--cor-secundaria); color: #fff; padding: 4px 8px; border-radius: 6px; text-decoration: none;">
+                        📲 APP
+                    </a>
+                </h1>
+            </div>
+            <div class="header-controls">
                 <div class="user-greeting">
                     Olá, <span id="user-email">...</span>
                     <a href="#" id="logout-btn">Sair</a>
                 </div>
-                <!-- NOVO: Botão de alternância de tema -->
                 <button id="theme-toggle-btn" title="Alterar tema">🌙</button>
             </div>
         </header>
 
         <main>
-            <!-- O resto do HTML é o mesmo -->
             <section class="actions">
                 <button class="action-btn gasto" id="add-gasto-btn"><span>-</span> Adicionar Despesa</button>
                 <button class="action-btn ganho" id="add-ganho-btn"><span>+</span> Adicionar Receita</button>
@@ -263,8 +259,9 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="date">Data da Nota</label>
-                    <input type="date" id="date" required>
+                    <label for="date">Data da Nota (opcional)</label>
+                    <!-- MUDANÇA: removido o atributo 'required' -->
+                    <input type="date" id="date">
                 </div>
                 <div class="form-actions">
                     <button type="button" class="form-btn cancel" id="cancel-btn">Cancelar</button>
@@ -300,10 +297,8 @@
     let transactions = [];
     let currentUser = null;
 
-    // --- NOVO: LÓGICA DO MODO ESCURO ---
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
     
-    // Define o ícone inicial do botão baseado no tema salvo
     if (localStorage.getItem('theme') === 'dark') {
         themeToggleBtn.textContent = '☀️';
     }
@@ -314,13 +309,12 @@
         
         if (isDarkMode) {
             localStorage.setItem('theme', 'dark');
-            themeToggleBtn.textContent = '☀️'; // Mudar para ícone de sol
+            themeToggleBtn.textContent = '☀️';
         } else {
             localStorage.setItem('theme', 'light');
-            themeToggleBtn.textContent = '🌙'; // Mudar para ícone de lua
+            themeToggleBtn.textContent = '🌙';
         }
     });
-    // --- FIM DA LÓGICA DO MODO ESCURO ---
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
@@ -356,12 +350,17 @@
             e.preventDefault();
             const description = document.getElementById('description').value;
             const amount = parseFloat(document.getElementById('amount').value);
-            const date = document.getElementById('date').value;
             const type = document.getElementById('transaction-type').value;
             const category = type === 'gasto' ? document.getElementById('category').value : null;
 
-            if (!description || isNaN(amount) || !date || (type === 'gasto' && !category)) {
-                alert("Por favor, preencha todos os campos obrigatórios.");
+            // MUDANÇA: Lógica para data padrão
+            // Pega o valor do campo de data. Se estiver vazio, usa a data de hoje.
+            const dateValue = document.getElementById('date').value;
+            const date = dateValue || new Date().toISOString().slice(0, 10);
+
+            // MUDANÇA: Remoção da verificação de data, pois agora sempre haverá uma.
+            if (!description || isNaN(amount) || (type === 'gasto' && !category)) {
+                alert("Por favor, preencha a Descrição, Valor e Categoria (se for despesa).");
                 return;
             }
             const newTransaction = { type, description, amount, date, category };
@@ -425,7 +424,10 @@
                 }
                 document.getElementById('transaction-type').value = type;
                 document.getElementById('modal-title').textContent = type === 'ganho' ? 'Adicionar Receita' : 'Adicionar Despesa';
+                
+                // Preenche a data com hoje por padrão, mas o usuário pode apagar
                 document.getElementById('date').valueAsDate = new Date();
+                
                 document.getElementById('modal-overlay').classList.add('active');
                 document.getElementById('description').focus();
             },
