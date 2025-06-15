@@ -5,72 +5,66 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Controle de Negócio</title>
 
-    <!-- SCRIPT PARA CARREGAR O TEMA PREVIAMENTE E EVITAR FLASH -->
-    <script>
-        (function() {
-            const theme = localStorage.getItem('theme');
-            if (theme === 'dark') {
-                document.documentElement.classList.add('dark-mode');
-            }
-        })();
-    </script>
-
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --cor-primaria: #2c3e50;
-            --cor-secundaria: #3498db;
-            --cor-sucesso: #2ecc71;
-            --cor-fundo: #f4f7f9;
-            --cor-texto: #34495e;
-            --cor-cartao: #ffffff;
-            --cor-borda: #ccc;
-            --sombra-suave: 0 4px 15px rgba(0, 0, 0, 0.08);
-            --borda-radius: 12px;
+        :root { /* Usando as mesmas variáveis de design */
+            --cor-primaria: #2c3e50; --cor-secundaria: #3498db; --cor-sucesso: #2ecc71;
+            --cor-fundo: #f4f7f9; --cor-texto: #34495e; --cor-cartao: #ffffff;
+            --sombra-suave: 0 4px 15px rgba(0, 0, 0, 0.08); --borda-radius: 12px;
         }
-
-        html.dark-mode {
-            --cor-fundo: #161d2a;
-            --cor-cartao: #202b3f;
-            --cor-primaria: #e5e9f0;
-            --cor-texto: #bdc3c7;
-            --cor-borda: #3a4a64;
-            --sombra-suave: 0 4px 20px rgba(0, 0, 0, 0.25);
-        }
-
         body {
             font-family: 'Poppins', sans-serif; background-color: var(--cor-fundo);
             display: flex; align-items: center; justify-content: center;
             min-height: 100vh; margin: 0;
             animation: fadeInPage 0.8s ease-in-out;
-            transition: background-color 0.3s ease;
         }
         .login-container {
             background-color: var(--cor-cartao); padding: 2.5rem 3rem;
             border-radius: var(--borda-radius); box-shadow: var(--sombra-suave);
             width: 90%; max-width: 400px; text-align: center;
-            transition: background-color 0.3s ease, box-shadow 0.3s ease;
         }
         .login-header h1 { font-size: 2rem; font-weight: 600; color: var(--cor-primaria); margin-bottom: 0.5rem; }
         .login-header h1::before { content: '💼'; margin-right: 12px; }
         .login-header p { color: var(--cor-texto); opacity: 0.8; margin-bottom: 2rem; }
         .form-group { margin-bottom: 1.5rem; text-align: left; }
-        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--cor-texto); }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
         .form-group input {
-            width: 100%; padding: 0.8rem 1rem; border: 1px solid var(--cor-borda);
+            width: 100%; padding: 0.8rem 1rem; border: 1px solid #ccc;
             border-radius: 8px; font-size: 1rem;
-            background-color: var(--cor-fundo);
-            color: var(--cor-primaria);
-            transition: all 0.3s ease;
         }
         .form-group input:focus {
             outline: none; border-color: var(--cor-secundaria);
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.25);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
         }
+        
+        /* --- NOVO: Estilos para o checkbox "Salvar login" --- */
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+        .remember-me-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .remember-me-group label {
+            color: var(--cor-texto);
+            cursor: pointer;
+        }
+        .remember-me-group input[type="checkbox"] {
+            cursor: pointer;
+            width: 1rem;
+            height: 1rem;
+        }
+        /* --- FIM DOS NOVOS ESTILOS --- */
+        
         .form-btn {
             width: 100%; padding: 1rem; border: none; border-radius: 8px;
             background-color: var(--cor-secundaria); color: white;
@@ -106,6 +100,15 @@
                 <label for="password">Senha</label>
                 <input type="password" id="password" required>
             </div>
+
+            <!-- NOVO: Checkbox para salvar o login -->
+            <div class="form-options">
+                <div class="remember-me-group">
+                    <input type="checkbox" id="remember-me" checked>
+                    <label for="remember-me">Salvar login</label>
+                </div>
+            </div>
+
             <button type="submit" class="form-btn" id="main-btn">Entrar</button>
         </form>
 
@@ -118,9 +121,20 @@
 
 
 <script type="module">
+  // 1. IMPORTAMOS AS FUNÇÕES QUE VAMOS USAR
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+  // NOVO: Funções adicionais importadas para a nova lógica
+  import { 
+    getAuth, 
+    createUserWithEmailAndPassword, 
+    signInWithEmailAndPassword,
+    setPersistence,
+    browserLocalPersistence,
+    browserSessionPersistence,
+    onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
 
+  // 2. SUA CONFIGURAÇÃO DO FIREBASE (JÁ ESTÁ CORRETA AQUI)
   const firebaseConfig = {
     apiKey: "AIzaSyAis9udhxjOP2I-7MzhgoXo6wbekWkkbF4",
     authDomain: "controle-de-negocio2.firebaseapp.com",
@@ -130,14 +144,30 @@
     appId: "1:382496322313:web:90eb6ef5efbcffcb3719d8"
   };
 
+  // 3. INICIALIZAMOS O FIREBASE E O SERVIÇO DE AUTENTICAÇÃO
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
 
+  // --- NOVO: VERIFICADOR DE SESSÃO ATIVA ---
+  // Esta função é a chave para o login automático.
+  // Ela verifica se o Firebase já tem um usuário conectado (de uma sessão anterior).
+  // Se tiver, redireciona para o dashboard antes mesmo da página de login ser totalmente exibida.
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      // Usuário está logado, redirecionar para o dashboard.
+      window.location.href = 'dashboard.html';
+    }
+    // Se não houver usuário, não faz nada e a página de login continua visível.
+  });
+
+  // 4. LÓGICA DA PÁGINA (ATUALIZADA)
   const loginForm = document.getElementById('login-form');
   const formTitle = document.getElementById('form-title');
   const mainBtn = document.getElementById('main-btn');
   const toggleFormContainer = document.querySelector('.toggle-form');
   const errorMessage = document.getElementById('error-message');
+  // NOVO: Captura o checkbox
+  const rememberMeCheckbox = document.getElementById('remember-me');
 
   let isLogin = true;
 
@@ -150,10 +180,12 @@
           if (isLogin) {
               formTitle.textContent = 'Acesse sua conta para continuar';
               mainBtn.textContent = 'Entrar';
+              rememberMeCheckbox.parentElement.parentElement.style.display = 'flex'; // Mostra o checkbox
               toggleFormContainer.querySelector('p').innerHTML = 'Não tem uma conta? <a href="#" id="toggle-link">Crie uma agora</a>';
           } else {
               formTitle.textContent = 'Crie sua conta gratuitamente';
               mainBtn.textContent = 'Criar Conta';
+              rememberMeCheckbox.parentElement.parentElement.style.display = 'none'; // Esconde o checkbox no modo de criação
               toggleFormContainer.querySelector('p').innerHTML = 'Já tem uma conta? <a href="#" id="toggle-link">Acesse aqui</a>';
           }
       }
@@ -166,15 +198,29 @@
       errorMessage.style.display = 'none';
 
       if (isLogin) {
-          signInWithEmailAndPassword(auth, email, password)
-              .then((userCredential) => {
-                  window.location.href = 'dashboard.html';
-              })
-              .catch((error) => {
-                  errorMessage.textContent = "Email ou senha incorretos.";
-                  errorMessage.style.display = 'block';
-              });
+          // --- NOVO: LÓGICA DE PERSISTÊNCIA ---
+          // Define se a sessão será salva (local) ou temporária (session)
+          const persistence = rememberMeCheckbox.checked 
+            ? browserLocalPersistence  // Salva entre sessões do navegador
+            : browserSessionPersistence; // Limpa ao fechar o navegador
+
+          setPersistence(auth, persistence)
+            .then(() => {
+                // Depois de definir a persistência, tentamos fazer o login
+                return signInWithEmailAndPassword(auth, email, password);
+            })
+            .then((userCredential) => {
+                // Sucesso no login, redireciona (a função onAuthStateChanged também faria isso, mas é bom garantir)
+                window.location.href = 'dashboard.html';
+            })
+            .catch((error) => {
+                // Erro pode vir do setPersistence ou do signInWithEmailAndPassword
+                errorMessage.textContent = "Email ou senha incorretos.";
+                errorMessage.style.display = 'block';
+            });
+
       } else {
+          // Lógica de Criação de Conta (inalterada, pois ao criar, o padrão já é salvar a sessão)
           if (password.length < 6) {
                errorMessage.textContent = "A senha precisa ter pelo menos 6 caracteres.";
                errorMessage.style.display = 'block';
