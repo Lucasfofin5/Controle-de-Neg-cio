@@ -81,28 +81,14 @@
         .form-btn.save { background-color: var(--cor-sucesso); color: white; } .form-btn.cancel { background-color: #e0e0e0; color: var(--cor-texto); }
         html.dark-mode .form-btn.cancel { background-color: #3a4a64; color: var(--cor-primaria); }
         #notification-permission-link { font-size: 0.9rem; color: var(--cor-secundaria); text-decoration: underline; cursor: pointer; }
-        
-        /* NOVO: Estilos para o Toast */
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
-        .toast {
-            display: flex; align-items: center;
-            background-color: var(--cor-cartao); color: var(--cor-texto);
-            padding: 12px 20px; border-radius: var(--borda-radius);
-            box-shadow: var(--sombra-suave); border-left: 5px solid;
-            min-width: 280px;
-            opacity: 0; transform: translateX(100%);
-            animation: toastIn 0.5s forwards, toastOut 0.5s 3s forwards;
-        }
+        .toast { display: flex; align-items: center; background-color: var(--cor-cartao); color: var(--cor-texto); padding: 12px 20px; border-radius: var(--borda-radius); box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-left: 5px solid; min-width: 280px; opacity: 0; transform: translateX(100%); animation: toastIn 0.5s forwards, toastOut 0.5s 3s forwards; }
         .toast-icon { font-size: 1.5rem; margin-right: 15px; }
-        .toast.success { border-color: var(--cor-sucesso); }
-        .toast.success .toast-icon { color: var(--cor-sucesso); }
-        .toast.info { border-color: var(--cor-secundaria); }
-        .toast.info .toast-icon { color: var(--cor-secundaria); }
-        .toast.error { border-color: var(--cor-alerta); }
-        .toast.error .toast-icon { color: var(--cor-alerta); }
+        .toast.success { border-color: var(--cor-sucesso); } .toast.success .toast-icon { color: var(--cor-sucesso); }
+        .toast.info { border-color: var(--cor-secundaria); } .toast.info .toast-icon { color: var(--cor-secundaria); }
+        .toast.error { border-color: var(--cor-alerta); } .toast.error .toast-icon { color: var(--cor-alerta); }
         @keyframes toastIn { to { opacity: 1; transform: translateX(0); } }
         @keyframes toastOut { to { opacity: 0; transform: translateX(100%); } }
-
         @media (max-width: 600px) { .chart-container { height: 250px; } }
     </style>
 </head>
@@ -134,12 +120,15 @@
         </main>
     </div>
     
-    <!-- NOVO: Container para os Toasts -->
     <div id="toast-container"></div>
 
-    <!-- Modais (sem alterações) -->
-    <div class="modal-overlay" id="transaction-modal-overlay"><!-- ... --></div>
-    <div class="modal-overlay" id="goals-modal-overlay"><!-- ... --></div>
+    <div class="modal-overlay" id="transaction-modal-overlay">
+        <div class="modal-content"><div class="modal-header"><h2 id="modal-title"></h2><button class="close-modal" data-modal-id="transaction-modal-overlay">×</button></div><form id="transaction-form"><input type="hidden" id="transaction-type"><div class="form-group"><label for="description">Descrição</label><input type="text" id="description" required></div><div class="form-group"><label for="amount">Valor</label><input type="number" id="amount" step="0.01" required></div><div class="form-group"><label for="category">Categoria</label><select id="category" required><option value="" disabled selected>Selecione...</option><option value="Fixas">Contas Fixas</option><option value="Fornecedores">Fornecedores</option><option value="Marketing">Marketing</option><option value="Pessoal">Pessoal / Salários</option><option value="Impostos">Impostos</option><option value="Outros">Outras Despesas</option></select></div><div class="form-group"><label for="date">Data (opcional)</label><input type="date" id="date"></div><div class="form-actions"><button type="button" class="form-btn cancel" data-modal-id="transaction-modal-overlay">Cancelar</button><button type="submit" class="form-btn save">Salvar</button></div></form></div>
+    </div>
+    
+    <div class="modal-overlay" id="goals-modal-overlay">
+        <div class="modal-content"><div class="modal-header"><h2>Definir Metas Mensais</h2><button class="close-modal" data-modal-id="goals-modal-overlay">×</button></div><form id="goals-form"><div class="form-group"><label for="goal-revenue">Meta de Receita (R$)</label><input type="number" id="goal-revenue" step="100"></div><div class="form-group"><label for="goal-expense">Limite de Despesas (R$)</label><input type="number" id="goal-expense" step="100"></div><div class="form-actions"><button type="button" class="form-btn cancel" data-modal-id="goals-modal-overlay">Cancelar</button><button type="submit" class="form-btn save">Salvar Metas</button></div></form></div>
+    </div>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -164,64 +153,43 @@
   const db = getFirestore(app);
 
   document.addEventListener('DOMContentLoaded', () => {
+    // --- STATE VARIABLES ---
     let currentUser = null;
     let transactions = [];
     let monthlyChart = null;
     let monthlyGoals = { revenue: 0, expense: 0 };
     let notificationState = { expenseGoalExceeded: false, revenueGoalNear: false };
     
-    // ... Lógica de tema e notificação de navegador (sem alterações)...
-    
-    function loadMonthlyGoals(userId) {
-        const monthId = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
-        const goalsDocRef = doc(db, 'users', userId, 'goals', monthId); // Caminho corrigido
-        onSnapshot(goalsDocRef, (docSnap) => {
-            App.resetNotificationState();
-            monthlyGoals = docSnap.exists() ? docSnap.data() : { revenue: 0, expense: 0 };
-            App.updateUI();
-        });
+    // --- DOM ELEMENTS ---
+    const notificationPermissionLink = document.getElementById('notification-permission-link');
+    const themeToggleBtn = document.getElementById('theme-toggle-btn');
+
+    // --- INITIAL SETUP ---
+    if (localStorage.getItem('theme') === 'dark') {
+        document.documentElement.classList.add('dark-mode');
+        themeToggleBtn.textContent = '☀️';
     }
 
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            currentUser = user;
-            document.getElementById('user-email').textContent = user.email;
-            loadTransactions(user.uid);
-            loadMonthlyGoals(user.uid);
-        } else { window.location.href = 'index.html'; }
-    });
-    
-    function loadTransactions(userId) {
-        const q = query(collection(db, 'users', userId, 'transactions'), orderBy('date', 'desc'));
-        onSnapshot(q, (snapshot) => {
-            transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            App.updateUI();
-        });
-    }
-
+    // --- CORE LOGIC OBJECT ---
     const App = {
-        // ... updateUI, checkAndSendNotifications, etc...
-
-        // NOVO: Função para mostrar notificações Toast
+        updateUI() { 
+            const monthlyTotals = this.calculateMonthlyTotals();
+            this.updateSummary(monthlyTotals); 
+            this.updateGoalsUI(monthlyTotals);
+            this.renderOrUpdateChart(); 
+            this.renderTransactions(); 
+        },
+        
         showToast(message, type = 'success') {
             const toastContainer = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
-            
-            const icons = {
-                success: '✅',
-                info: 'ℹ️',
-                error: '❌'
-            };
-
+            const icons = { success: '✅', info: 'ℹ️', error: '❌' };
             toast.innerHTML = `<span class="toast-icon">${icons[type]}</span> <p>${message}</p>`;
             toastContainer.appendChild(toast);
-
-            setTimeout(() => {
-                toast.remove();
-            }, 3500); // Duração + tempo de animação de saída
+            setTimeout(() => toast.remove(), 3500);
         },
-
+        
         saveGoals(e) {
             e.preventDefault();
             const revenueGoal = parseFloat(document.getElementById('goal-revenue').value) || 0;
@@ -233,9 +201,9 @@
                     this.Modal.close('goals-modal-overlay');
                     this.showToast('Metas salvas com sucesso!');
                 })
-                .catch(error => console.error("Erro ao salvar metas:", error));
+                .catch(error => this.showToast('Erro ao salvar metas.', 'error'));
         },
-
+        
         addTransaction(e) {
             e.preventDefault();
             const newTransaction = {
@@ -245,44 +213,180 @@
                 date: document.getElementById('date').value || new Date().toISOString().slice(0, 10),
                 category: document.getElementById('transaction-type').value === 'gasto' ? document.getElementById('category').value : null
             };
-            if (!newTransaction.description || isNaN(newTransaction.amount) || (newTransaction.type === 'gasto' && !newTransaction.category)) return alert("Preencha os campos obrigatórios.");
+            if (!newTransaction.description || isNaN(newTransaction.amount) || (newTransaction.type === 'gasto' && !newTransaction.category)) return this.showToast("Preencha os campos obrigatórios.", "error");
             
             addDoc(collection(db, 'users', currentUser.uid, 'transactions'), newTransaction)
                 .then(() => {
                     this.Modal.close('transaction-modal-overlay');
                     this.showToast('Transação adicionada com sucesso!');
                 })
-                .catch(error => console.error("Erro ao adicionar transação:", error));
+                .catch(error => this.showToast('Erro ao adicionar transação.', 'error'));
         },
 
         removeTransaction(id) {
             if (confirm('Tem certeza que deseja excluir este lançamento?')) {
                 deleteDoc(doc(db, 'users', currentUser.uid, 'transactions', id))
-                    .then(() => {
-                        this.showToast('Lançamento excluído.', 'info');
-                    })
-                    .catch(error => console.error("Erro ao excluir transação:", error));
+                    .then(() => this.showToast('Lançamento excluído.', 'info'))
+                    .catch(error => this.showToast('Erro ao excluir.', 'error'));
+            }
+        },
+
+        resetNotificationState() {
+            notificationState = { expenseGoalExceeded: false, revenueGoalNear: false };
+        },
+        
+        sendNotification(title, options = {}) {
+            if (Notification.permission !== 'granted') return;
+            new Notification(title, { icon: document.getElementById('favicon').href, ...options });
+        },
+
+        checkAndSendNotifications({ totalGanhos, totalGastos }) {
+            const { revenue: revenueGoal, expense: expenseGoal } = monthlyGoals;
+            if (expenseGoal > 0 && totalGastos >= expenseGoal && !notificationState.expenseGoalExceeded) {
+                this.sendNotification("Alerta de Despesas!", { body: `Você ultrapassou seu limite de gastos de ${this.formatCurrency(expenseGoal)}!`, tag: 'expense-alert' });
+                notificationState.expenseGoalExceeded = true;
+            }
+            if (revenueGoal > 0 && totalGanhos < revenueGoal && !notificationState.revenueGoalNear && (totalGanhos / revenueGoal) >= 0.9) {
+                const remaining = revenueGoal - totalGanhos;
+                this.sendNotification("Meta de Receita Quase Lá!", { body: `Faltam apenas ${this.formatCurrency(remaining)} para atingir sua meta de ${this.formatCurrency(revenueGoal)}!`, tag: 'revenue-alert' });
+                notificationState.revenueGoalNear = true;
             }
         },
         
-        // ... todas as outras funções do App permanecem aqui, completas e funcionais.
-        // As omiti aqui para brevidade, mas o código completo está no bloco acima.
-        updateUI() { /* ... */ },
-        resetNotificationState() { /* ... */ },
-        sendNotification(title, options) { /* ... */ },
-        checkAndSendNotifications(totals) { /* ... */ },
-        updateGoalsUI(totals) { /* ... */ },
-        calculateMonthlyTotals() { /* ... */ },
-        updateSummary(totals) { /* ... */ },
-        renderTransactions() { /* ... */ },
-        processDataForChart() { /* ... */ },
-        renderOrUpdateChart() { /* ... */ },
-        Modal: { /* ... */ },
-        handleListClick(e) { /* ... */ },
-        formatCurrency(value) { /* ... */ },
+        updateGoalsUI({ totalGanhos, totalGastos }) {
+            const { revenue: revenueGoal, expense: expenseGoal } = monthlyGoals;
+            document.getElementById('revenue-goal-text').textContent = `${this.formatCurrency(totalGanhos)} / ${this.formatCurrency(revenueGoal)}`;
+            document.getElementById('expense-goal-text').textContent = `${this.formatCurrency(totalGastos)} / ${this.formatCurrency(expenseGoal)}`;
+            const revenueBar = document.getElementById('revenue-progress-bar');
+            revenueBar.style.width = `${Math.min(revenueGoal > 0 ? (totalGanhos / revenueGoal) * 100 : 0, 100)}%`;
+            const expenseBar = document.getElementById('expense-progress-bar');
+            const expenseProgress = expenseGoal > 0 ? (totalGastos / expenseGoal) * 100 : 0;
+            expenseBar.style.width = `${Math.min(expenseProgress, 100)}%`;
+            expenseBar.className = 'progress-bar';
+            if (expenseProgress >= 100) expenseBar.classList.add('danger');
+            else if (expenseProgress >= 90) expenseBar.classList.add('warning');
+            else expenseBar.classList.add('success');
+            this.checkAndSendNotifications({ totalGanhos, totalGastos });
+        },
+
+        calculateMonthlyTotals() {
+            const now = new Date();
+            const monthlyTransactions = transactions.filter(t => new Date(t.date + 'T00:00:00').getMonth() === now.getMonth() && new Date(t.date + 'T00:00:00').getFullYear() === now.getFullYear());
+            const totalGanhos = monthlyTransactions.filter(t => t.type === 'ganho').reduce((acc, t) => acc + t.amount, 0);
+            const totalGastos = monthlyTransactions.filter(t => t.type === 'gasto').reduce((acc, t) => acc + t.amount, 0);
+            return { totalGanhos, totalGastos };
+        },
+        
+        updateSummary({ totalGanhos, totalGastos }) {
+            const saldo = totalGanhos - totalGastos;
+            document.getElementById('total-ganhos').textContent = this.formatCurrency(totalGanhos);
+            document.getElementById('total-gastos').textContent = this.formatCurrency(totalGastos);
+            document.getElementById('saldo-mes').textContent = this.formatCurrency(saldo);
+            document.getElementById('saldo-mes').className = saldo >= 0 ? 'positive' : 'negative';
+        },
+
+        renderTransactions() {
+            const list = document.getElementById('transaction-list');
+            list.innerHTML = '';
+            transactions.slice(0, 10).forEach(t => {
+                const isGasto = t.type === 'gasto';
+                const item = document.createElement('li');
+                item.className = 'transaction-item';
+                item.dataset.id = t.id;
+                item.innerHTML = `<div class="transaction-details"><div class="transaction-icon ${isGasto ? 'gasto' : 'ganho'}">${isGasto ? '🧾' : '💵'}</div><div><p class="description">${t.description}</p>${t.category ? `<span class="category-tag">${t.category}</span>` : ''}</div></div><div style="text-align:right;"><p class="transaction-amount ${isGasto ? 'negative' : 'positive'}">${this.formatCurrency(t.amount)}</p><button class="delete-btn" title="Excluir">🗑️</button></div>`;
+                list.appendChild(item);
+            });
+        },
+        
+        processDataForChart() {
+            const monthlyDataChart = {};
+            const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+            transactions.forEach(t => {
+                const date = new Date(t.date + 'T00:00:00');
+                const yearMonth = `${date.getFullYear()}-${String(date.getMonth()).padStart(2, '0')}`;
+                if (!monthlyDataChart[yearMonth]) monthlyDataChart[yearMonth] = { ganhos: 0, gastos: 0, label: `${monthNames[date.getMonth()]}/${date.getFullYear().toString().slice(-2)}` };
+                if (t.type === 'ganho') monthlyDataChart[yearMonth].ganhos += t.amount; else monthlyDataChart[yearMonth].gastos += t.amount;
+            });
+            const sortedKeys = Object.keys(monthlyDataChart).sort();
+            return {
+                labels: sortedKeys.map(key => monthlyDataChart[key].label),
+                ganhosData: sortedKeys.map(key => monthlyDataChart[key].ganhos),
+                gastosData: sortedKeys.map(key => monthlyDataChart[key].gastos)
+            };
+        },
+
+        renderOrUpdateChart() {
+            const { labels, ganhosData, gastosData } = this.processDataForChart();
+            const ctx = document.getElementById('monthly-chart').getContext('2d');
+            const isDarkMode = document.documentElement.classList.contains('dark-mode');
+            const style = getComputedStyle(document.documentElement);
+            if (monthlyChart) monthlyChart.destroy();
+            monthlyChart = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: 'Receitas', data: ganhosData, borderColor: style.getPropertyValue('--cor-sucesso').trim(), backgroundColor: 'rgba(46, 204, 113, 0.1)', fill: true, tension: 0.3 }, { label: 'Despesas', data: gastosData, borderColor: style.getPropertyValue('--cor-alerta').trim(), backgroundColor: 'rgba(231, 76, 60, 0.1)', fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { color: isDarkMode ? '#bdc3c7' : '#34495e' }, grid: { color: style.getPropertyValue('--cor-borda').trim() } }, x: { ticks: { color: isDarkMode ? '#bdc3c7' : '#34495e' }, grid: { color: 'transparent' } } }, plugins: { legend: { labels: { color: isDarkMode ? '#e5e9f0' : '#2c3e50' } }, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${this.formatCurrency(c.parsed.y)}` } } } } });
+        },
+
+        Modal: {
+            open(modalId, type) {
+                const modal = document.getElementById(modalId);
+                if (modalId === 'transaction-modal-overlay') {
+                    modal.querySelector('#modal-title').textContent = type === 'ganho' ? 'Adicionar Receita' : 'Adicionar Despesa';
+                    modal.querySelector('#transaction-type').value = type;
+                    modal.querySelector('#category').parentElement.style.display = type === 'gasto' ? 'block' : 'none';
+                    modal.querySelector('#category').required = type === 'gasto';
+                } else if (modalId === 'goals-modal-overlay') {
+                    modal.querySelector('#goal-revenue').value = monthlyGoals.revenue || '';
+                    modal.querySelector('#goal-expense').value = monthlyGoals.expense || '';
+                }
+                modal.classList.add('active');
+            },
+            close(modalId) {
+                const modal = document.getElementById(modalId);
+                modal.classList.remove('active');
+                modal.querySelector('form').reset();
+            }
+        },
+
+        handleListClick(e) {
+            if (e.target.classList.contains('delete-btn')) {
+                this.removeTransaction(e.target.closest('.transaction-item').dataset.id);
+            }
+        },
+
+        formatCurrency: (value) => (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
     };
     
-    // ... todos os event listeners ...
+    // --- EVENT LISTENERS ---
+    themeToggleBtn.addEventListener('click', () => {
+        document.documentElement.classList.toggle('dark-mode');
+        localStorage.setItem('theme', document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light');
+        themeToggleBtn.textContent = document.documentElement.classList.contains('dark-mode') ? '☀️' : '🌙';
+        if (monthlyChart) App.renderOrUpdateChart();
+    });
+
+    notificationPermissionLink.addEventListener('click', () => {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') App.sendNotification("Ótimo!", { body: "As notificações sobre suas metas estão ativas." });
+            notificationPermissionLink.classList.toggle('hidden', permission !== 'default' && permission !== 'denied');
+        });
+    });
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+            document.getElementById('user-email').textContent = user.email;
+            loadTransactions(user.uid);
+            loadMonthlyGoals(user.uid);
+            notificationPermissionLink.classList.toggle('hidden', Notification.permission !== 'default' && Notification.permission !== 'denied');
+        } else { window.location.href = 'index.html'; }
+    });
+    
+    document.getElementById('logout-btn').addEventListener('click', (e) => { e.preventDefault(); signOut(auth); });
+    document.getElementById('add-gasto-btn').addEventListener('click', () => App.Modal.open('transaction-modal-overlay', 'gasto'));
+    document.getElementById('add-ganho-btn').addEventListener('click', () => App.Modal.open('transaction-modal-overlay', 'ganho'));
+    document.getElementById('set-goals-btn').addEventListener('click', () => App.Modal.open('goals-modal-overlay'));
+    document.querySelectorAll('.close-modal, .form-btn.cancel').forEach(btn => btn.addEventListener('click', () => App.Modal.close(btn.dataset.modalId)));
+    document.getElementById('transaction-form').addEventListener('submit', (e) => App.addTransaction(e));
+    document.getElementById('goals-form').addEventListener('submit', (e) => App.saveGoals(e));
+    document.getElementById('transaction-list').addEventListener('click', (e) => App.handleListClick(e));
   });
 </script>
 </body>
