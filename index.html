@@ -52,9 +52,9 @@
         .form-btn:hover { background-color: #2980b9; }
         .toggle-form { margin-top: 1.5rem; color: var(--cor-texto); font-size: 0.9rem; }
         .toggle-form a { color: var(--cor-secundaria); text-decoration: none; font-weight: 600; cursor: pointer; }
-        .message { margin-top: 1rem; display: none; }
-        .message.error { color: #e74c3c; }
-        .message.success { color: var(--cor-sucesso); }
+        .message { margin-top: 1rem; display: none; padding: 0.8rem; border-radius: 8px; }
+        .message.error { background-color: rgba(231, 76, 60, 0.1); color: #e74c3c; }
+        .message.success { background-color: rgba(46, 204, 113, 0.1); color: var(--cor-sucesso); }
         @keyframes fadeInPage { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
@@ -97,7 +97,6 @@
     </div>
 
 <script type="module">
-  // 1. IMPORTAÇÕES
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
   import { 
       getAuth, 
@@ -110,7 +109,6 @@
       browserSessionPersistence
   } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
 
-  // 2. CONFIGURAÇÃO E INICIALIZAÇÃO
   const firebaseConfig = {
     apiKey: "AIzaSyAis9udhxjOP2I-7MzhgoXo6wbekWkkbF4",
     authDomain: "controle-de-negocio2.firebaseapp.com",
@@ -122,7 +120,6 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
 
-  // 3. GUARDA DE AUTENTICAÇÃO
   onAuthStateChanged(auth, (user) => {
     if (user) {
       window.location.replace('dashboard.html');
@@ -131,7 +128,6 @@
     }
   });
 
-  // 4. LÓGICA DA PÁGINA
   document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
     const formTitle = document.getElementById('form-title');
@@ -144,7 +140,7 @@
     const rememberMeContainer = document.getElementById('remember-me-container');
     const forgotPasswordLink = document.getElementById('forgot-password-link');
 
-    let formState = 'login'; // 'login', 'register', 'reset'
+    let formState = 'login';
 
     function showMessage(text, type = 'error') {
         messageArea.textContent = text;
@@ -156,28 +152,24 @@
         messageArea.style.display = 'none';
         loginForm.style.display = 'block';
 
-        if (formState === 'reset') {
-            formTitle.textContent = 'Recuperar Senha';
-            passwordGroup.style.display = 'none';
-            rememberMeContainer.style.display = 'none';
-            forgotPasswordLink.style.display = 'none';
-            mainBtn.textContent = 'Enviar Link de Recuperação';
-            toggleFormContainer.querySelector('p').innerHTML = '<a id="toggle-link" data-target="login">Voltar para o Login</a>';
-        } else if (formState === 'login') {
-            formTitle.textContent = 'Acesse sua conta para continuar';
-            passwordGroup.style.display = 'block';
-            rememberMeContainer.style.display = 'flex';
-            forgotPasswordLink.style.display = 'block';
-            mainBtn.textContent = 'Entrar';
-            toggleFormContainer.querySelector('p').innerHTML = 'Não tem uma conta? <a id="toggle-link" data-target="register">Crie uma agora</a>';
-        } else { // formState === 'register'
-            formTitle.textContent = 'Crie sua conta gratuitamente';
-            passwordGroup.style.display = 'block';
-            rememberMeContainer.style.display = 'none';
-            forgotPasswordLink.style.display = 'none';
-            mainBtn.textContent = 'Criar Conta';
-            toggleFormContainer.querySelector('p').innerHTML = 'Já tem uma conta? <a id="toggle-link" data-target="login">Acesse aqui</a>';
+        const isReset = formState === 'reset';
+        const isLogin = formState === 'login';
+
+        formTitle.textContent = isReset ? 'Recuperar Senha' : (isLogin ? 'Acesse sua conta' : 'Crie sua conta');
+        passwordGroup.style.display = isReset ? 'none' : 'block';
+        rememberMeContainer.style.display = isLogin ? 'flex' : 'none';
+        forgotPasswordLink.style.display = isLogin ? 'block' : 'none';
+        mainBtn.textContent = isReset ? 'Enviar Link' : (isLogin ? 'Entrar' : 'Criar Conta');
+        
+        let toggleHTML = '';
+        if (isReset) {
+            toggleHTML = '<a id="toggle-link" data-target="login">Voltar para o Login</a>';
+        } else if (isLogin) {
+            toggleHTML = 'Não tem uma conta? <a id="toggle-link" data-target="register">Crie uma agora</a>';
+        } else {
+            toggleHTML = 'Já tem uma conta? <a id="toggle-link" data-target="login">Acesse aqui</a>';
         }
+        toggleFormContainer.querySelector('p').innerHTML = toggleHTML;
     }
     
     togglePassword.addEventListener('click', () => {
@@ -207,33 +199,40 @@
         messageArea.style.display = 'none';
 
         if (formState === 'reset') {
+            mainBtn.disabled = true;
+            mainBtn.textContent = 'Enviando...';
             sendPasswordResetEmail(auth, email)
                 .then(() => {
-                    showMessage('Link enviado! Verifique sua caixa de e-mail (e spam).', 'success');
+                    showMessage('Link de recuperação enviado! Verifique sua caixa de e-mail (e a pasta de spam).', 'success');
                     loginForm.style.display = 'none';
                 })
                 .catch((error) => {
+                    console.error("Password Reset Error:", error);
                     if (error.code === 'auth/user-not-found') {
                         showMessage('Email não cadastrado.');
+                    } else if (error.code === 'auth/invalid-email') {
+                         showMessage('Formato de e-mail inválido.');
                     } else {
-                        showMessage('Ocorreu um erro ao enviar o e-mail.');
+                        showMessage('Ocorreu um erro. Tente novamente.');
                     }
+                })
+                .finally(() => {
+                    mainBtn.disabled = false;
+                    mainBtn.textContent = 'Enviar Link';
                 });
+
         } else if (formState === 'login') {
             const password = passwordInput.value;
             const rememberMe = document.getElementById('remember-me').checked;
             const persistenceType = rememberMe ? browserLocalPersistence : browserSessionPersistence;
             setPersistence(auth, persistenceType)
                 .then(() => signInWithEmailAndPassword(auth, email, password))
-                .catch((error) => {
-                    showMessage("Email ou senha incorretos.");
-                });
+                .catch((error) => showMessage("Email ou senha incorretos."));
+
         } else { // formState === 'register'
             const password = passwordInput.value;
-            if (password.length < 6) {
-                showMessage("A senha precisa ter pelo menos 6 caracteres.");
-                return;
-            }
+            if (password.length < 6) return showMessage("A senha precisa ter pelo menos 6 caracteres.");
+            
             createUserWithEmailAndPassword(auth, email, password)
                 .catch((error) => {
                     let friendlyMessage = "Ocorreu um erro ao criar a conta.";
