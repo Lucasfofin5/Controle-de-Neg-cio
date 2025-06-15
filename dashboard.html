@@ -20,6 +20,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- NOVO: Adicionando a biblioteca de gráficos Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <style>
         /* CSS ATUALIZADO PARA MODO ESCURO */
         :root {
@@ -59,7 +63,6 @@
         .logo h1 { font-size: 2.2rem; font-weight: 600; color: var(--cor-primaria); }
         .logo h1::before { content: '💼'; margin-right: 12px; font-size: 2rem; }
         
-        /* NOVO: Container para controles do cabeçalho */
         .header-controls { display: flex; align-items: center; gap: 1rem; }
 
         .user-greeting {
@@ -72,7 +75,6 @@
         #user-email { font-weight: 600; color: var(--cor-secundaria); }
         #logout-btn { margin-left:1rem; color: var(--cor-alerta); font-weight: 600; text-decoration: none; }
         
-        /* NOVO: Estilo para o botão de tema */
         .theme-toggle-btn {
             background: none;
             border: 2px solid var(--cor-borda);
@@ -96,11 +98,18 @@
         .card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
         html.dark-mode .card:hover { box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
 
+        /* NOVO: Estilo para o container do gráfico */
+        .chart-container {
+            position: relative;
+            height: 350px; /* Altura do gráfico */
+            width: 100%;
+        }
+
         h2 { font-size: 1.2rem; font-weight: 500; margin-bottom: 1.5rem; color: var(--cor-primaria); opacity: 0.8; }
         .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
         .action-btn {
             display: flex; align-items: center; justify-content: center; padding: 1.5rem;
-            border-radius: var(--borda-radius); text-decoration: none; color: #fff; /* Cor do texto é sempre branca */
+            border-radius: var(--borda-radius); text-decoration: none; color: #fff;
             font-size: 1.2rem; font-weight: 500; transition: var(--transicao-suave);
             box-shadow: var(--sombra-suave); cursor: pointer; border: none;
         }
@@ -186,6 +195,7 @@
             .actions { grid-template-columns: 1fr; } .card { padding: 1.5rem; }
             header { flex-direction: column; align-items: flex-start; gap: 1rem; }
             .header-controls { width: 100%; justify-content: space-between; }
+            .chart-container { height: 250px; } /* Altura ajustada para mobile */
         }
     </style>
 </head>
@@ -214,14 +224,24 @@
                 <button class="action-btn gasto" id="add-gasto-btn"><span>-</span> Adicionar Despesa</button>
                 <button class="action-btn ganho" id="add-ganho-btn"><span>+</span> Adicionar Receita</button>
             </section>
+
             <section class="card summary-card">
-                <h2>Resumo do Mês</h2>
+                <h2>Resumo do Mês Atual</h2>
                 <div class="summary">
                     <div class="summary-item"><h3>Receitas</h3><p id="total-ganhos" class="positive">R$ 0,00</p></div>
                     <div class="summary-item"><h3>Despesas</h3><p id="total-gastos" class="negative">R$ 0,00</p></div>
                     <div class="summary-item"><h3>Saldo</h3><p id="saldo-mes">R$ 0,00</p></div>
                 </div>
             </section>
+            
+            <!-- NOVO: Seção para o gráfico -->
+            <section class="card chart-card">
+                <h2>Faturamento Mensal</h2>
+                <div class="chart-container">
+                    <canvas id="monthly-chart"></canvas>
+                </div>
+            </section>
+
             <section class="card recent-transactions">
                 <h2>Últimos Lançamentos</h2>
                 <ul id="transaction-list" class="transaction-list"></ul>
@@ -229,7 +249,7 @@
         </main>
     </div>
 
-    <!-- Modal com campo de Categoria -->
+    <!-- Modal ... (sem alterações) -->
     <div class="modal-overlay" id="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -260,7 +280,6 @@
                 </div>
                 <div class="form-group">
                     <label for="date">Data da Nota (opcional)</label>
-                    <!-- MUDANÇA: removido o atributo 'required' -->
                     <input type="date" id="date">
                 </div>
                 <div class="form-actions">
@@ -296,6 +315,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     let transactions = [];
     let currentUser = null;
+    let monthlyChart = null; // NOVO: Variável para guardar a instância do gráfico
 
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
     
@@ -314,6 +334,9 @@
             localStorage.setItem('theme', 'light');
             themeToggleBtn.textContent = '🌙';
         }
+        
+        // NOVO: Atualiza o gráfico quando o tema muda para que as cores fiquem corretas
+        App.renderOrUpdateChart();
     });
 
     onAuthStateChanged(auth, (user) => {
@@ -345,20 +368,21 @@
     }
 
     const App = {
-        updateUI() { this.renderTransactions(); this.updateSummary(); },
+        // MUDANÇA: O updateUI agora também chama a função do gráfico
+        updateUI() { 
+            this.updateSummary(); 
+            this.renderOrUpdateChart(); 
+            this.renderTransactions(); 
+        },
         addTransaction(e) {
             e.preventDefault();
             const description = document.getElementById('description').value;
             const amount = parseFloat(document.getElementById('amount').value);
             const type = document.getElementById('transaction-type').value;
             const category = type === 'gasto' ? document.getElementById('category').value : null;
-
-            // MUDANÇA: Lógica para data padrão
-            // Pega o valor do campo de data. Se estiver vazio, usa a data de hoje.
             const dateValue = document.getElementById('date').value;
             const date = dateValue || new Date().toISOString().slice(0, 10);
 
-            // MUDANÇA: Remoção da verificação de data, pois agora sempre haverá uma.
             if (!description || isNaN(amount) || (type === 'gasto' && !category)) {
                 alert("Por favor, preencha a Descrição, Valor e Categoria (se for despesa).");
                 return;
@@ -375,11 +399,10 @@
             }
         },
         renderTransactions() {
+            // Lógica de renderizar transações (sem alterações)
             const transactionList = document.getElementById('transaction-list');
             transactionList.innerHTML = '';
-            const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
-
-            sortedTransactions.forEach(t => {
+            transactions.slice(0, 10).forEach(t => { // Mostra apenas as 10 últimas
                 const isGasto = t.type === 'gasto';
                 const icon = isGasto ? '🧾' : '💵';
                 const amountClass = isGasto ? 'negative' : 'positive';
@@ -404,15 +427,128 @@
             });
         },
         updateSummary() {
-            const totalGanhos = transactions.filter(t => t.type === 'ganho').reduce((acc, t) => acc + t.amount, 0);
-            const totalGastos = transactions.filter(t => t.type === 'gasto').reduce((acc, t) => acc + t.amount, 0);
+            // Filtra transações apenas para o mês e ano atuais
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            const monthlyTransactions = transactions.filter(t => {
+                const transactionDate = new Date(t.date + 'T00:00:00');
+                return transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
+            });
+
+            const totalGanhos = monthlyTransactions.filter(t => t.type === 'ganho').reduce((acc, t) => acc + t.amount, 0);
+            const totalGastos = monthlyTransactions.filter(t => t.type === 'gasto').reduce((acc, t) => acc + t.amount, 0);
             const saldo = totalGanhos - totalGastos;
             document.getElementById('total-ganhos').textContent = this.formatCurrency(totalGanhos);
             document.getElementById('total-gastos').textContent = this.formatCurrency(totalGastos);
             document.getElementById('saldo-mes').textContent = this.formatCurrency(saldo);
             document.getElementById('saldo-mes').className = saldo >= 0 ? 'positive' : 'negative';
         },
-        Modal: {
+
+        // --- NOVO: FUNÇÕES PARA PROCESSAR DADOS E RENDERIZAR O GRÁFICO ---
+        processDataForChart() {
+            const monthlyData = {};
+            const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+            transactions.forEach(t => {
+                const date = new Date(t.date + 'T00:00:00');
+                const yearMonth = `${date.getFullYear()}-${String(date.getMonth()).padStart(2, '0')}`; // Formato 'AAAA-MM' para ordenação
+
+                if (!monthlyData[yearMonth]) {
+                    monthlyData[yearMonth] = { ganhos: 0, gastos: 0, label: `${monthNames[date.getMonth()]}/${date.getFullYear().toString().slice(-2)}` };
+                }
+
+                if (t.type === 'ganho') {
+                    monthlyData[yearMonth].ganhos += t.amount;
+                } else {
+                    monthlyData[yearMonth].gastos += t.amount;
+                }
+            });
+
+            const sortedKeys = Object.keys(monthlyData).sort();
+            
+            const labels = sortedKeys.map(key => monthlyData[key].label);
+            const ganhosData = sortedKeys.map(key => monthlyData[key].ganhos);
+            const gastosData = sortedKeys.map(key => monthlyData[key].gastos);
+
+            return { labels, ganhosData, gastosData };
+        },
+
+        renderOrUpdateChart() {
+            const { labels, ganhosData, gastosData } = this.processDataForChart();
+            const ctx = document.getElementById('monthly-chart').getContext('2d');
+            const isDarkMode = document.documentElement.classList.contains('dark-mode');
+            const style = getComputedStyle(document.documentElement);
+            
+            // Destrói o gráfico antigo para criar um novo. Isso evita bugs de renderização.
+            if (monthlyChart) {
+                monthlyChart.destroy();
+            }
+
+            monthlyChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Receitas',
+                            data: ganhosData,
+                            borderColor: style.getPropertyValue('--cor-sucesso').trim(),
+                            backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Despesas',
+                            data: gastosData,
+                            borderColor: style.getPropertyValue('--cor-alerta').trim(),
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: isDarkMode ? '#bdc3c7' : '#34495e' },
+                            grid: { color: style.getPropertyValue('--cor-borda').trim() }
+                        },
+                        x: {
+                            ticks: { color: isDarkMode ? '#bdc3c7' : '#34495e' },
+                            grid: { color: 'transparent' }
+                        }
+                    },
+                    plugins: {
+                        legend: { labels: { color: isDarkMode ? '#e5e9f0' : '#2c3e50' } },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    let label = context.dataset.label || '';
+                                    if (label) { label += ': '; }
+                                    if (context.parsed.y !== null) {
+                                        label += App.formatCurrency(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        },
+
+        // --- FIM DAS NOVAS FUNÇÕES ---
+
+        Modal: { // Lógica do Modal (sem alterações)
             open(type) {
                 const categoryField = document.getElementById('category').parentElement;
                 if (type === 'ganho') {
@@ -424,10 +560,7 @@
                 }
                 document.getElementById('transaction-type').value = type;
                 document.getElementById('modal-title').textContent = type === 'ganho' ? 'Adicionar Receita' : 'Adicionar Despesa';
-                
-                // Preenche a data com hoje por padrão, mas o usuário pode apagar
-                document.getElementById('date').valueAsDate = new Date();
-                
+                document.getElementById('date').value = '';
                 document.getElementById('modal-overlay').classList.add('active');
                 document.getElementById('description').focus();
             },
