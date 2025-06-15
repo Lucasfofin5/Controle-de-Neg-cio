@@ -41,30 +41,27 @@
             box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
         }
         
-        /* --- NOVO: Estilos para o checkbox "Salvar login" --- */
-        .form-options {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            font-size: 0.9rem;
-        }
-        .remember-me-group {
+        /* --- ESTILOS PARA O BOTÃO DE VER SENHA --- */
+        .password-wrapper {
+            position: relative;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
         }
-        .remember-me-group label {
-            color: var(--cor-texto);
+        .password-wrapper input {
+            padding-right: 3rem; /* Espaço para o ícone */
+        }
+        .toggle-password {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
             cursor: pointer;
+            font-size: 1.3rem;
+            color: #aaa;
+            user-select: none; /* Impede que o ícone seja selecionado como texto */
         }
-        .remember-me-group input[type="checkbox"] {
-            cursor: pointer;
-            width: 1rem;
-            height: 1rem;
-        }
-        /* --- FIM DOS NOVOS ESTILOS --- */
-        
+        /* --- FIM DOS ESTILOS --- */
+
         .form-btn {
             width: 100%; padding: 1rem; border: none; border-radius: 8px;
             background-color: var(--cor-secundaria); color: white;
@@ -98,17 +95,12 @@
             </div>
             <div class="form-group">
                 <label for="password">Senha</label>
-                <input type="password" id="password" required>
-            </div>
-
-            <!-- NOVO: Checkbox para salvar o login -->
-            <div class="form-options">
-                <div class="remember-me-group">
-                    <input type="checkbox" id="remember-me" checked>
-                    <label for="remember-me">Salvar login</label>
+                <!-- AQUI ESTÁ A IMPLEMENTAÇÃO DO CAMPO DE SENHA COM O ÍCONE -->
+                <div class="password-wrapper">
+                    <input type="password" id="password" required>
+                    <span class="toggle-password" id="toggle-password">👁️</span>
                 </div>
             </div>
-
             <button type="submit" class="form-btn" id="main-btn">Entrar</button>
         </form>
 
@@ -123,16 +115,7 @@
 <script type="module">
   // 1. IMPORTAMOS AS FUNÇÕES QUE VAMOS USAR
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-  // NOVO: Funções adicionais importadas para a nova lógica
-  import { 
-    getAuth, 
-    createUserWithEmailAndPassword, 
-    signInWithEmailAndPassword,
-    setPersistence,
-    browserLocalPersistence,
-    browserSessionPersistence,
-    onAuthStateChanged
-  } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
 
   // 2. SUA CONFIGURAÇÃO DO FIREBASE (JÁ ESTÁ CORRETA AQUI)
   const firebaseConfig = {
@@ -148,28 +131,33 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
 
-  // --- NOVO: VERIFICADOR DE SESSÃO ATIVA ---
-  // Esta função é a chave para o login automático.
-  // Ela verifica se o Firebase já tem um usuário conectado (de uma sessão anterior).
-  // Se tiver, redireciona para o dashboard antes mesmo da página de login ser totalmente exibida.
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      // Usuário está logado, redirecionar para o dashboard.
-      window.location.href = 'dashboard.html';
-    }
-    // Se não houver usuário, não faz nada e a página de login continua visível.
-  });
-
-  // 4. LÓGICA DA PÁGINA (ATUALIZADA)
+  // 4. LÓGICA DA PÁGINA 
   const loginForm = document.getElementById('login-form');
   const formTitle = document.getElementById('form-title');
   const mainBtn = document.getElementById('main-btn');
   const toggleFormContainer = document.querySelector('.toggle-form');
   const errorMessage = document.getElementById('error-message');
-  // NOVO: Captura o checkbox
-  const rememberMeCheckbox = document.getElementById('remember-me');
+  
+  // ELEMENTOS PARA A FUNCIONALIDADE DE VER SENHA
+  const passwordInput = document.getElementById('password');
+  const togglePassword = document.getElementById('toggle-password');
 
   let isLogin = true;
+
+  // EVENT LISTENER PARA O ÍCONE DO OLHO
+  togglePassword.addEventListener('click', () => {
+      // Verifica o tipo atual do campo de senha
+      const isPassword = passwordInput.type === 'password';
+      
+      // Alterna o tipo do input e o ícone
+      if (isPassword) {
+          passwordInput.type = 'text';
+          togglePassword.textContent = '🙈'; // Ícone de olho fechado/coberto
+      } else {
+          passwordInput.type = 'password';
+          togglePassword.textContent = '👁️'; // Ícone de olho aberto
+      }
+  });
 
   toggleFormContainer.addEventListener('click', (event) => {
       if (event.target.id === 'toggle-link') {
@@ -180,12 +168,10 @@
           if (isLogin) {
               formTitle.textContent = 'Acesse sua conta para continuar';
               mainBtn.textContent = 'Entrar';
-              rememberMeCheckbox.parentElement.parentElement.style.display = 'flex'; // Mostra o checkbox
               toggleFormContainer.querySelector('p').innerHTML = 'Não tem uma conta? <a href="#" id="toggle-link">Crie uma agora</a>';
           } else {
               formTitle.textContent = 'Crie sua conta gratuitamente';
               mainBtn.textContent = 'Criar Conta';
-              rememberMeCheckbox.parentElement.parentElement.style.display = 'none'; // Esconde o checkbox no modo de criação
               toggleFormContainer.querySelector('p').innerHTML = 'Já tem uma conta? <a href="#" id="toggle-link">Acesse aqui</a>';
           }
       }
@@ -194,33 +180,21 @@
   loginForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
+      const password = passwordInput.value; // Usando a referência que já temos
       errorMessage.style.display = 'none';
 
       if (isLogin) {
-          // --- NOVO: LÓGICA DE PERSISTÊNCIA ---
-          // Define se a sessão será salva (local) ou temporária (session)
-          const persistence = rememberMeCheckbox.checked 
-            ? browserLocalPersistence  // Salva entre sessões do navegador
-            : browserSessionPersistence; // Limpa ao fechar o navegador
-
-          setPersistence(auth, persistence)
-            .then(() => {
-                // Depois de definir a persistência, tentamos fazer o login
-                return signInWithEmailAndPassword(auth, email, password);
-            })
-            .then((userCredential) => {
-                // Sucesso no login, redireciona (a função onAuthStateChanged também faria isso, mas é bom garantir)
-                window.location.href = 'dashboard.html';
-            })
-            .catch((error) => {
-                // Erro pode vir do setPersistence ou do signInWithEmailAndPassword
-                errorMessage.textContent = "Email ou senha incorretos.";
-                errorMessage.style.display = 'block';
-            });
-
+          // Lógica de Login
+          signInWithEmailAndPassword(auth, email, password)
+              .then((userCredential) => {
+                  window.location.href = 'dashboard.html';
+              })
+              .catch((error) => {
+                  errorMessage.textContent = "Email ou senha incorretos.";
+                  errorMessage.style.display = 'block';
+              });
       } else {
-          // Lógica de Criação de Conta (inalterada, pois ao criar, o padrão já é salvar a sessão)
+          // Lógica de Criação de Conta
           if (password.length < 6) {
                errorMessage.textContent = "A senha precisa ter pelo menos 6 caracteres.";
                errorMessage.style.display = 'block';
