@@ -176,10 +176,10 @@
         .form-btn.save { background-color: var(--cor-sucesso); color: white; }
         .form-btn.save:hover { filter: brightness(1.1); }
         .form-btn.cancel { background-color: #e0e0e0; color: var(--cor-texto); }
-        html.dark-mode .form-btn.cancel { background-color: #3a4a64; color: var(--cor-primaria); }
+        html.dark-mode .form-btn.cancel { background-color: #3a4a64; color: var(--primaria); }
         .form-btn.cancel:hover { filter: brightness(1.2); }
         
-        /* --- NOVO: ESTILOS PARA NOTIFICAÇÃO (TOAST) --- */
+        /* --- ESTILOS PARA NOTIFICAÇÃO (TOAST) --- */
         .notification-toast {
             position: fixed;
             bottom: 20px;
@@ -194,7 +194,6 @@
             align-items: center;
             font-weight: 500;
             
-            /* Animação */
             visibility: hidden;
             opacity: 0;
             transform: translateY(20px);
@@ -222,7 +221,6 @@
         html.dark-mode .notification-toast {
             box-shadow: 0 5px 25px rgba(0,0,0,0.3);
         }
-        /* --- FIM DOS NOVOS ESTILOS --- */
         
         @keyframes fadeInPage { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @media (max-width: 600px) {
@@ -307,7 +305,7 @@
         </div>
     </div>
     
-    <!-- NOVO: Elemento para Notificações (Toast) -->
+    <!-- Elemento para Notificações (Toast) -->
     <div id="notification-toast" class="notification-toast">
         <span id="notification-message"></span>
     </div>
@@ -386,7 +384,7 @@
     }
 
     const App = {
-        notificationTimer: null, // NOVO: Controlador para o timer da notificação
+        notificationTimer: null,
 
         updateUI() { this.renderTransactions(); this.updateSummary(); },
         addTransaction(e) {
@@ -405,25 +403,25 @@
             const transactionsCollection = collection(db, 'users', currentUser.uid, 'transactions');
             
             addDoc(transactionsCollection, newTransaction)
-                .then(() => { // NOVO: Feedback de sucesso
+                .then(() => {
                     const message = type === 'gasto' ? 'Despesa adicionada!' : 'Receita adicionada!';
                     this.showNotification(message, 'success');
+                    // MELHORIA: Fechar o modal apenas depois que a operação for um sucesso.
+                    this.Modal.close(); 
                 })
-                .catch(error => { // NOVO: Feedback de erro
+                .catch(error => {
                     console.error("Erro ao adicionar transação:", error);
                     this.showNotification('Erro ao salvar transação.', 'error');
                 });
-            
-            this.Modal.close();
         },
         removeTransaction(id) {
             if (confirm('Tem certeza que deseja excluir este lançamento?')) {
                 const transactionDoc = doc(db, 'users', currentUser.uid, 'transactions', id);
                 deleteDoc(transactionDoc)
-                    .then(() => { // NOVO: Feedback de sucesso
+                    .then(() => {
                         this.showNotification('Lançamento excluído com sucesso!', 'success');
                     })
-                    .catch(error => { // NOVO: Feedback de erro
+                    .catch(error => {
                         console.error("Erro ao deletar transação:", error);
                         this.showNotification('Erro ao excluir lançamento.', 'error');
                     });
@@ -479,7 +477,8 @@
                 }
                 document.getElementById('transaction-type').value = type;
                 document.getElementById('modal-title').textContent = type === 'ganho' ? 'Adicionar Receita' : 'Adicionar Despesa';
-                document.getElementById('date').valueAsDate = new new Date();
+                // CORREÇÃO: Removido o 'new' extra.
+                document.getElementById('date').valueAsDate = new Date();
                 document.getElementById('modal-overlay').classList.add('active');
                 document.getElementById('description').focus();
             },
@@ -496,22 +495,19 @@
         },
         formatCurrency: (value) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
         
-        // --- NOVO: FUNÇÃO PARA MOSTRAR NOTIFICAÇÕES ---
         showNotification(message, type = 'success') {
             const toast = document.getElementById('notification-toast');
             const messageEl = document.getElementById('notification-message');
 
-            // Limpa qualquer notificação anterior para evitar sobreposição de timers
             if (this.notificationTimer) {
                 clearTimeout(this.notificationTimer);
             }
 
             messageEl.textContent = message;
-            toast.className = 'notification-toast'; // Reseta as classes
-            toast.classList.add(type); // Adiciona 'success' ou 'error'
-            toast.classList.add('show'); // Torna o toast visível
+            toast.className = 'notification-toast';
+            toast.classList.add(type);
+            toast.classList.add('show');
 
-            // Define um timer para esconder o toast após 3 segundos
             this.notificationTimer = setTimeout(() => {
                 toast.classList.remove('show');
             }, 3000);
