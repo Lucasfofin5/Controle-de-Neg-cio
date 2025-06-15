@@ -153,33 +153,28 @@
   const db = getFirestore(app);
 
   document.addEventListener('DOMContentLoaded', () => {
-    // --- STATE VARIABLES ---
+    // --- STATE & CONFIG ---
     let currentUser = null;
     let transactions = [];
     let monthlyChart = null;
     let monthlyGoals = { revenue: 0, expense: 0 };
     let notificationState = { expenseGoalExceeded: false, revenueGoalNear: false };
-    
+
     // --- DOM ELEMENTS ---
     const notificationPermissionLink = document.getElementById('notification-permission-link');
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
-
-    // --- INITIAL SETUP ---
-    if (localStorage.getItem('theme') === 'dark') {
-        document.documentElement.classList.add('dark-mode');
-        themeToggleBtn.textContent = '☀️';
-    }
-
+    
     // --- CORE LOGIC OBJECT ---
     const App = {
-        updateUI() { 
+        updateUI() {
+            if (!currentUser) return;
             const monthlyTotals = this.calculateMonthlyTotals();
-            this.updateSummary(monthlyTotals); 
+            this.updateSummary(monthlyTotals);
             this.updateGoalsUI(monthlyTotals);
-            this.renderOrUpdateChart(); 
-            this.renderTransactions(); 
+            this.renderOrUpdateChart();
+            this.renderTransactions();
         },
-        
+
         showToast(message, type = 'success') {
             const toastContainer = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -189,7 +184,7 @@
             toastContainer.appendChild(toast);
             setTimeout(() => toast.remove(), 3500);
         },
-        
+
         saveGoals(e) {
             e.preventDefault();
             const revenueGoal = parseFloat(document.getElementById('goal-revenue').value) || 0;
@@ -203,7 +198,7 @@
                 })
                 .catch(error => this.showToast('Erro ao salvar metas.', 'error'));
         },
-        
+
         addTransaction(e) {
             e.preventDefault();
             const newTransaction = {
@@ -213,8 +208,9 @@
                 date: document.getElementById('date').value || new Date().toISOString().slice(0, 10),
                 category: document.getElementById('transaction-type').value === 'gasto' ? document.getElementById('category').value : null
             };
-            if (!newTransaction.description || isNaN(newTransaction.amount) || (newTransaction.type === 'gasto' && !newTransaction.category)) return this.showToast("Preencha os campos obrigatórios.", "error");
-            
+            if (!newTransaction.description || isNaN(newTransaction.amount) || (newTransaction.type === 'gasto' && !newTransaction.category)) {
+                return this.showToast("Preencha os campos obrigatórios.", "error");
+            }
             addDoc(collection(db, 'users', currentUser.uid, 'transactions'), newTransaction)
                 .then(() => {
                     this.Modal.close('transaction-modal-overlay');
@@ -234,7 +230,7 @@
         resetNotificationState() {
             notificationState = { expenseGoalExceeded: false, revenueGoalNear: false };
         },
-        
+
         sendNotification(title, options = {}) {
             if (Notification.permission !== 'granted') return;
             new Notification(title, { icon: document.getElementById('favicon').href, ...options });
@@ -252,7 +248,7 @@
                 notificationState.revenueGoalNear = true;
             }
         },
-        
+
         updateGoalsUI({ totalGanhos, totalGastos }) {
             const { revenue: revenueGoal, expense: expenseGoal } = monthlyGoals;
             document.getElementById('revenue-goal-text').textContent = `${this.formatCurrency(totalGanhos)} / ${this.formatCurrency(revenueGoal)}`;
@@ -271,7 +267,12 @@
 
         calculateMonthlyTotals() {
             const now = new Date();
-            const monthlyTransactions = transactions.filter(t => new Date(t.date + 'T00:00:00').getMonth() === now.getMonth() && new Date(t.date + 'T00:00:00').getFullYear() === now.getFullYear());
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth();
+            const monthlyTransactions = transactions.filter(t => {
+                const transactionDate = new Date(t.date + 'T00:00:00');
+                return transactionDate.getFullYear() === currentYear && transactionDate.getMonth() === currentMonth;
+            });
             const totalGanhos = monthlyTransactions.filter(t => t.type === 'ganho').reduce((acc, t) => acc + t.amount, 0);
             const totalGastos = monthlyTransactions.filter(t => t.type === 'gasto').reduce((acc, t) => acc + t.amount, 0);
             return { totalGanhos, totalGastos };
@@ -340,8 +341,11 @@
             },
             close(modalId) {
                 const modal = document.getElementById(modalId);
-                modal.classList.remove('active');
-                modal.querySelector('form').reset();
+                if(modal) {
+                    modal.classList.remove('active');
+                    const form = modal.querySelector('form');
+                    if(form) form.reset();
+                }
             }
         },
 
@@ -354,11 +358,12 @@
         formatCurrency: (value) => (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
     };
     
-    // --- EVENT LISTENERS ---
+    // --- EVENT LISTENERS SETUP ---
     themeToggleBtn.addEventListener('click', () => {
         document.documentElement.classList.toggle('dark-mode');
-        localStorage.setItem('theme', document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light');
-        themeToggleBtn.textContent = document.documentElement.classList.contains('dark-mode') ? '☀️' : '🌙';
+        const isDarkMode = document.documentElement.classList.contains('dark-mode');
+        localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+        themeToggleBtn.textContent = isDarkMode ? '☀️' : '🌙';
         if (monthlyChart) App.renderOrUpdateChart();
     });
 
@@ -368,6 +373,24 @@
             notificationPermissionLink.classList.toggle('hidden', permission !== 'default' && permission !== 'denied');
         });
     });
+
+    function loadTransactions(userId) {
+        const q = query(collection(db, 'users', userId, 'transactions'), orderBy('date', 'desc'));
+        onSnapshot(q, (snapshot) => {
+            transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            App.updateUI();
+        });
+    }
+
+    function loadMonthlyGoals(userId) {
+        const monthId = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+        const goalsDocRef = doc(db, 'users', userId, 'goals', monthId);
+        onSnapshot(goalsDocRef, (docSnap) => {
+            App.resetNotificationState();
+            monthlyGoals = docSnap.exists() ? docSnap.data() : { revenue: 0, expense: 0 };
+            App.updateUI();
+        });
+    }
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
