@@ -116,7 +116,23 @@
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
-            // *** PONTO DE INTEGRAÇÃO COM FIREBASE ***
+            // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAis9udhxjOP2I-7MzhgoXo6wbekWkkbF4",
+  authDomain: "controle-de-negocio2.firebaseapp.com",
+  projectId: "controle-de-negocio2",
+  storageBucket: "controle-de-negocio2.firebasestorage.app",
+  messagingSenderId: "382496322313",
+  appId: "1:382496322313:web:90eb6ef5efbcffcb3719d8"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
             if (isLogin) {
                 console.log('Tentando fazer login com:', email, password);
                 // Aqui entraria: firebase.auth().signInWithEmailAndPassword(email, password)...
