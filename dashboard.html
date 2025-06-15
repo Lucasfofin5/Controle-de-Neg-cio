@@ -1,57 +1,243 @@
-<!-- dashboard.html atualizado com geração de PDF -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel - Controle de Negócio</title>
+
+    <!-- Biblioteca jsPDF para exportar PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- Mantendo o resto da head original -->
+
+    <!-- Seu CSS, fontes e restante da head original -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* SEU CSS ORIGINAL MANTIDO (modo escuro, layout, etc) */
+        :root {
+            --cor-primaria: #2c3e50;
+            --cor-secundaria: #3498db;
+            --cor-sucesso: #2ecc71;
+            --cor-alerta: #e74c3c;
+            --cor-fundo: #f4f7f9;
+            --cor-texto: #34495e;
+            --cor-cartao: #ffffff;
+            --cor-borda: #e0e0e0;
+        }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--cor-fundo); color: var(--cor-texto); }
+        .action-btn { display: inline-block; padding: 1rem; border-radius: 8px; font-weight: bold; text-decoration: none; cursor: pointer; }
+        .ganho { background: linear-gradient(45deg, var(--cor-sucesso), var(--cor-secundaria)); color: white; }
+        .gasto { background: linear-gradient(45deg, var(--cor-alerta), #f1c40f); color: white; }
+        .card { background-color: var(--cor-cartao); padding: 1rem; margin-bottom: 1rem; border-radius: 8px; }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="logo">
-                <h1>Controle de Negócio</h1>
+
+<div class="container">
+    <header>
+        <div class="logo"><h1>Controle de Negócio</h1></div>
+        <div class="header-controls">
+            <div class="user-greeting">
+                Olá, <span id="user-email">...</span>
+                <a href="#" id="logout-btn">Sair</a>
             </div>
-            <div class="header-controls">
-                <div class="user-greeting">
-                    Olá, <span id="user-email">.</span>
-                    <a href="#" id="logout-btn">Sair</a>
-                </div>
-                <button id="theme-toggle-btn" title="Alterar tema">🌙</button>
+            <button id="theme-toggle-btn" title="Alterar tema">🌙</button>
+        </div>
+    </header>
+
+    <main>
+        <section class="actions">
+            <button class="action-btn gasto" id="add-gasto-btn"><span>-</span> Adicionar Despesa</button>
+            <button class="action-btn ganho" id="add-ganho-btn"><span>+</span> Adicionar Receita</button>
+        </section>
+
+        <section class="card summary-card">
+            <h2>Resumo do Mês</h2>
+            <div class="summary">
+                <div class="summary-item"><h3>Receitas</h3><p id="total-ganhos" class="positive">R$ 0,00</p></div>
+                <div class="summary-item"><h3>Despesas</h3><p id="total-gastos" class="negative">R$ 0,00</p></div>
+                <div class="summary-item"><h3>Saldo</h3><p id="saldo-mes">R$ 0,00</p></div>
             </div>
-        </header>
 
-        <main>
-            <section class="actions">
-                <button class="action-btn gasto" id="add-gasto-btn"><span>-</span> Adicionar Despesa</button>
-                <button class="action-btn ganho" id="add-ganho-btn"><span>+</span> Adicionar Receita</button>
-            </section>
+            <!-- Botão Gerar PDF -->
+            <button id="generate-pdf-btn" class="action-btn ganho" style="margin-top: 1rem;">
+                📄 Gerar Relatório PDF
+            </button>
+        </section>
 
-            <section class="card summary-card">
-                <h2>Resumo do Mês</h2>
-                <div class="summary">
-                    <div class="summary-item"><h3>Receitas</h3><p id="total-ganhos" class="positive">R$ 0,00</p></div>
-                    <div class="summary-item"><h3>Despesas</h3><p id="total-gastos" class="negative">R$ 0,00</p></div>
-                    <div class="summary-item"><h3>Saldo</h3><p id="saldo-mes">R$ 0,00</p></div>
-                </div>
-                <!-- Botão PDF -->
-                <button id="generate-pdf-btn" class="action-btn ganho" style="margin-top: 1rem;">
-                    📄 Gerar Relatório PDF
-                </button>
-            </section>
+        <section class="card recent-transactions">
+            <h2>Últimos Lançamentos</h2>
+            <ul id="transaction-list" class="transaction-list"></ul>
+        </section>
+    </main>
+</div>
 
-            <section class="card recent-transactions">
-                <h2>Últimos Lançamentos</h2>
-                <ul id="transaction-list" class="transaction-list"></ul>
-            </section>
-        </main>
-    </div>
+<!-- Seus scripts Firebase e funcionalidades existentes -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
-    <!-- Modal e outros scripts Firebase permanecem iguais -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+  import { getFirestore, collection, addDoc, doc, deleteDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
 
-    <script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAis9udhxjOP2I-7MzhgoXo6wbekWkkbF4",
+    authDomain: "controle-de-negocio2.firebaseapp.com",
+    projectId: "controle-de-negocio2",
+    storageBucket: "controle-de-negocio2.appspot.com",
+    messagingSenderId: "382496322313",
+    appId: "1:382496322313:web:90eb6ef5efbcffcb3719d8"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  document.addEventListener('DOMContentLoaded', () => {
+    let transactions = [];
+    let currentUser = null;
+
+    const themeToggleBtn = document.getElementById('theme-toggle-btn');
+    if (localStorage.getItem('theme') === 'dark') {
+        themeToggleBtn.textContent = '☀️';
+        document.documentElement.classList.add('dark-mode');
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+        document.documentElement.classList.toggle('dark-mode');
+        const isDarkMode = document.documentElement.classList.contains('dark-mode');
+        localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+        themeToggleBtn.textContent = isDarkMode ? '☀️' : '🌙';
+    });
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+            document.getElementById('user-email').textContent = user.email;
+            loadTransactions(user.uid);
+        } else {
+            window.location.href = 'index.html';
+        }
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        signOut(auth).catch(error => console.error("Erro no logout:", error));
+    });
+
+    function loadTransactions(userId) {
+        const transactionsCollection = collection(db, 'users', userId, 'transactions');
+        const q = query(transactionsCollection, orderBy('date', 'desc'));
+
+        onSnapshot(q, (snapshot) => {
+            transactions = [];
+            snapshot.forEach(doc => {
+                transactions.push({ id: doc.id, ...doc.data() });
+            });
+            App.updateUI();
+        });
+    }
+
+    const App = {
+        updateUI() { this.renderTransactions(); this.updateSummary(); },
+        addTransaction(e) {
+            e.preventDefault();
+            const description = document.getElementById('description').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const date = document.getElementById('date').value;
+            const type = document.getElementById('transaction-type').value;
+            const category = type === 'gasto' ? document.getElementById('category').value : null;
+
+            if (!description || isNaN(amount) || !date || (type === 'gasto' && !category)) {
+                alert("Por favor, preencha todos os campos obrigatórios.");
+                return;
+            }
+            const newTransaction = { type, description, amount, date, category };
+            const transactionsCollection = collection(db, 'users', currentUser.uid, 'transactions');
+            addDoc(transactionsCollection, newTransaction).catch(error => console.error("Erro ao adicionar transação:", error));
+            this.Modal.close();
+        },
+        removeTransaction(id) {
+            if (confirm('Tem certeza que deseja excluir este lançamento?')) {
+                const transactionDoc = doc(db, 'users', currentUser.uid, 'transactions', id);
+                deleteDoc(transactionDoc).catch(error => console.error("Erro ao deletar transação:", error));
+            }
+        },
+        renderTransactions() {
+            const transactionList = document.getElementById('transaction-list');
+            transactionList.innerHTML = '';
+            const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            sortedTransactions.forEach(t => {
+                const isGasto = t.type === 'gasto';
+                const icon = isGasto ? '🧾' : '💵';
+                const amountClass = isGasto ? 'negative' : 'positive';
+                const typeClass = isGasto ? 'gasto' : 'ganho';
+                const listItem = document.createElement('li');
+                listItem.classList.add('transaction-item');
+                listItem.dataset.id = t.id;
+                listItem.innerHTML = `
+                    <div class="transaction-details">
+                        <div class="transaction-icon ${typeClass}">${icon}</div>
+                        <div>
+                            <p class="description">${t.description}</p>
+                            ${t.category ? `<span class="category-tag">${t.category}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="transaction-actions">
+                        <p class="transaction-amount ${amountClass}">${this.formatCurrency(t.amount)}</p>
+                        <button class="delete-btn" title="Excluir lançamento">🗑️</button>
+                    </div>
+                `;
+                transactionList.appendChild(listItem);
+            });
+        },
+        updateSummary() {
+            const totalGanhos = transactions.filter(t => t.type === 'ganho').reduce((acc, t) => acc + t.amount, 0);
+            const totalGastos = transactions.filter(t => t.type === 'gasto').reduce((acc, t) => acc + t.amount, 0);
+            const saldo = totalGanhos - totalGastos;
+            document.getElementById('total-ganhos').textContent = this.formatCurrency(totalGanhos);
+            document.getElementById('total-gastos').textContent = this.formatCurrency(totalGastos);
+            document.getElementById('saldo-mes').textContent = this.formatCurrency(saldo);
+        },
+        Modal: {
+            open(type) {
+                const categoryField = document.getElementById('category').parentElement;
+                if (type === 'ganho') {
+                    categoryField.style.display = 'none';
+                    document.getElementById('category').required = false;
+                } else {
+                    categoryField.style.display = 'block';
+                    document.getElementById('category').required = true;
+                }
+                document.getElementById('transaction-type').value = type;
+                document.getElementById('modal-title').textContent = type === 'ganho' ? 'Adicionar Receita' : 'Adicionar Despesa';
+                document.getElementById('date').valueAsDate = new Date();
+                document.getElementById('modal-overlay').classList.add('active');
+                document.getElementById('description').focus();
+            },
+            close() {
+                document.getElementById('modal-overlay').classList.remove('active');
+                document.getElementById('transaction-form').reset();
+            }
+        },
+        handleListClick(e) {
+            if (e.target.classList.contains('delete-btn')) {
+                const listItem = e.target.closest('.transaction-item');
+                this.removeTransaction(listItem.dataset.id);
+            }
+        },
+        formatCurrency: (value) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+    };
+
+    document.getElementById('add-gasto-btn').addEventListener('click', () => App.Modal.open('gasto'));
+    document.getElementById('add-ganho-btn').addEventListener('click', () => App.Modal.open('ganho'));
+    document.getElementById('transaction-list').addEventListener('click', (e) => App.handleListClick(e));
+
+    // Função para gerar o PDF
     document.getElementById('generate-pdf-btn').addEventListener('click', () => {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
@@ -71,8 +257,8 @@
 
         doc.save('Relatorio_Financeiro.pdf');
     });
-    </script>
+  });
+</script>
 
-    <!-- Scripts Firebase + resto do JS -->
 </body>
 </html>
