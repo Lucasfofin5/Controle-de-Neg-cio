@@ -82,73 +82,88 @@
         </div>
     </div>
 
-    <script>
-        // LÓGICA DO FRONTEND PARA A PÁGINA DE LOGIN
-        // AINDA SEM FIREBASE, APENAS A INTERFACE
-        const loginForm = document.getElementById('login-form');
-        const formTitle = document.getElementById('form-title');
-        const mainBtn = document.getElementById('main-btn');
-        const toggleText = document.getElementById('toggle-text');
-        const toggleLink = document.getElementById('toggle-link');
-        const errorMessage = document.getElementById('error-message');
 
-        let isLogin = true;
+<script type="module">
+  // 1. IMPORTAMOS AS FUNÇÕES QUE VAMOS USAR
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
 
-        toggleLink.addEventListener('click', () => {
-            isLogin = !isLogin;
-            errorMessage.style.display = 'none'; // Esconde erros ao trocar
+  // 2. SUA CONFIGURAÇÃO DO FIREBASE (JÁ ESTÁ CORRETA AQUI)
+  const firebaseConfig = {
+    apiKey: "AIzaSyAis9udhxjOP2I-7MzhgoXo6wbekWkkbF4",
+    authDomain: "controle-de-negocio2.firebaseapp.com",
+    projectId: "controle-de-negocio2",
+    storageBucket: "controle-de-negocio2.firebasestorage.app",
+    messagingSenderId: "382496322313",
+    appId: "1:382496322313:web:90eb6ef5efbcffcb3719d8"
+  };
 
-            if (isLogin) {
-                formTitle.textContent = 'Acesse sua conta para continuar';
-                mainBtn.textContent = 'Entrar';
-                toggleText.innerHTML = 'Não tem uma conta? <a id="toggle-link">Crie uma agora</a>';
-            } else {
-                formTitle.textContent = 'Crie sua conta gratuitamente';
-                mainBtn.textContent = 'Criar Conta';
-                toggleText.innerHTML = 'Já tem uma conta? <a id="toggle-link">Acesse aqui</a>';
-            }
-            // Re-adiciona o listener ao novo link
-            document.getElementById('toggle-link').addEventListener('click', toggleLink.click);
-        });
-        
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+  // 3. INICIALIZAMOS O FIREBASE E O SERVIÇO DE AUTENTICAÇÃO
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
 
-            // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+  // 4. LÓGICA DA PÁGINA (JÁ CORRIGIDA PARA O BOTÃO "CRIAR CONTA")
+  const loginForm = document.getElementById('login-form');
+  const formTitle = document.getElementById('form-title');
+  const mainBtn = document.getElementById('main-btn');
+  const toggleFormContainer = document.querySelector('.toggle-form');
+  const errorMessage = document.getElementById('error-message');
 
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyAis9udhxjOP2I-7MzhgoXo6wbekWkkbF4",
-  authDomain: "controle-de-negocio2.firebaseapp.com",
-  projectId: "controle-de-negocio2",
-  storageBucket: "controle-de-negocio2.firebasestorage.app",
-  messagingSenderId: "382496322313",
-  appId: "1:382496322313:web:90eb6ef5efbcffcb3719d8"
-};
+  let isLogin = true;
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-            if (isLogin) {
-                console.log('Tentando fazer login com:', email, password);
-                // Aqui entraria: firebase.auth().signInWithEmailAndPassword(email, password)...
-                // Se der certo, redireciona para index.html
-                // Se der errado, mostra erro no errorMessage.
-                alert('Funcionalidade de Login (simulada). Redirecionando...');
-                window.location.href = 'index.html'; // Simulação de sucesso
-            } else {
-                console.log('Tentando criar conta com:', email, password);
-                // Aqui entraria: firebase.auth().createUserWithEmailAndPassword(email, password)...
-                // Se der certo, redireciona para index.html
-                // Se der errado, mostra erro no errorMessage.
-                alert('Funcionalidade de Criação de Conta (simulada). Redirecionando...');
-                window.location.href = 'index.html'; // Simulação de sucesso
-            }
-        });
-    </script>
-</body>
-</html>
+  toggleFormContainer.addEventListener('click', (event) => {
+      if (event.target.id === 'toggle-link') {
+          event.preventDefault();
+          isLogin = !isLogin;
+          errorMessage.style.display = 'none';
+
+          if (isLogin) {
+              formTitle.textContent = 'Acesse sua conta para continuar';
+              mainBtn.textContent = 'Entrar';
+              toggleFormContainer.querySelector('p').innerHTML = 'Não tem uma conta? <a href="#" id="toggle-link">Crie uma agora</a>';
+          } else {
+              formTitle.textContent = 'Crie sua conta gratuitamente';
+              mainBtn.textContent = 'Criar Conta';
+              toggleFormContainer.querySelector('p').innerHTML = 'Já tem uma conta? <a href="#" id="toggle-link">Acesse aqui</a>';
+          }
+      }
+  });
+
+  loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      errorMessage.style.display = 'none';
+
+      if (isLogin) {
+          // Lógica de Login com a nova sintaxe
+          signInWithEmailAndPassword(auth, email, password)
+              .then((userCredential) => {
+                  window.location.href = 'dashboard.html';
+              })
+              .catch((error) => {
+                  errorMessage.textContent = "Email ou senha incorretos.";
+                  errorMessage.style.display = 'block';
+              });
+      } else {
+          // Lógica de Criação de Conta com a nova sintaxe
+          if (password.length < 6) {
+               errorMessage.textContent = "A senha precisa ter pelo menos 6 caracteres.";
+               errorMessage.style.display = 'block';
+               return;
+          }
+          createUserWithEmailAndPassword(auth, email, password)
+              .then((userCredential) => {
+                  window.location.href = 'dashboard.html';
+              })
+              .catch((error) => {
+                  let friendlyMessage = "Ocorreu um erro. Tente novamente.";
+                  if (error.code == 'auth/email-already-in-use') {
+                      friendlyMessage = "Este email já está sendo utilizado.";
+                  }
+                  errorMessage.textContent = friendlyMessage;
+                  errorMessage.style.display = 'block';
+              });
+      }
+  });
+</script>
