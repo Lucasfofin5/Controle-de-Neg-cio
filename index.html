@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Negócio - Simples e Eficiente</title>
-    
+    <title>Painel - Controle de Negócio</title>
+    <!-- O resto do <head> é o mesmo... -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
     <style>
-        /* CSS - Sem alterações na aparência, apenas na lógica */
-        :root {
+        /* CSS ATUALIZADO PARA CATEGORIAS */
+        :root { /* ...variáveis CSS... */
             --cor-primaria: #2c3e50; --cor-secundaria: #3498db; --cor-sucesso: #2ecc71;
             --cor-alerta: #e74c3c; --cor-fundo: #f4f7f9; --cor-texto: #34495e;
             --cor-cartao: #ffffff; --sombra-suave: 0 4px 15px rgba(0, 0, 0, 0.05);
             --borda-radius: 12px; --transicao-suave: all 0.3s ease-in-out;
         }
+        /* ...Reset e estilos base... */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { font-size: 16px; }
         body {
@@ -25,6 +25,18 @@
             animation: fadeInPage 0.8s ease-in-out;
         }
         .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+        /* Adicionando estilo para a tag da categoria */
+        .category-tag {
+            background-color: #ecf0f1;
+            color: #7f8c8d;
+            padding: 0.2rem 0.6rem;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-block;
+            margin-top: 4px;
+        }
+        /* O resto do CSS é praticamente idêntico ao anterior */
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
         .logo h1 { font-size: 2.2rem; font-weight: 600; color: var(--cor-primaria); }
         .logo h1::before { content: '💼'; margin-right: 12px; font-size: 2rem; }
@@ -33,7 +45,8 @@
             padding: 0.5rem 0.8rem; border-radius: 8px; transition: background-color 0.2s ease;
         }
         .user-greeting:hover { background-color: #e9eef1; }
-        #user-name { font-weight: 600; color: var(--cor-secundaria); }
+        #user-email { font-weight: 600; color: var(--cor-secundaria); }
+        #logout-btn { margin-left:1rem; color: var(--cor-alerta); font-weight: 600; text-decoration: none; }
         .card {
             background-color: var(--cor-cartao); border-radius: var(--borda-radius);
             padding: 1.5rem 2rem; margin-bottom: 1.5rem;
@@ -97,11 +110,11 @@
         .close-modal:hover { color: var(--cor-alerta); }
         .form-group { margin-bottom: 1rem; }
         .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
-        .form-group input {
+        .form-group input, .form-group select {
             width: 100%; padding: 0.8rem; border: 1px solid #ccc; border-radius: 8px;
             font-size: 1rem; font-family: 'Poppins', sans-serif; transition: border-color 0.2s, box-shadow 0.2s;
         }
-        .form-group input:focus { outline: none; border-color: var(--cor-secundaria); box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2); }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--cor-secundaria); box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2); }
         .form-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
         .form-btn { padding: 0.8rem 1.5rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 500; cursor: pointer; transition: var(--transicao-suave); }
         .form-btn.save { background-color: var(--cor-sucesso); color: white; }
@@ -122,16 +135,17 @@
     </style>
 </head>
 <body>
-
     <div class="container">
         <header>
             <div class="logo"><h1>Controle de Negócio</h1></div>
-            <div class="user-greeting" id="user-greeting">
-                Carregando...
+            <div class="user-greeting">
+                Olá, <span id="user-email">...</span>
+                <a href="#" id="logout-btn">Sair</a>
             </div>
         </header>
 
         <main>
+            <!-- O resto do HTML é o mesmo -->
             <section class="actions">
                 <button class="action-btn gasto" id="add-gasto-btn"><span>-</span> Adicionar Despesa</button>
                 <button class="action-btn ganho" id="add-ganho-btn"><span>+</span> Adicionar Receita</button>
@@ -153,6 +167,7 @@
         </main>
     </div>
 
+    <!-- Modal com campo de Categoria -->
     <div class="modal-overlay" id="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -161,10 +176,31 @@
             </div>
             <form id="transaction-form">
                 <input type="hidden" id="transaction-type">
-                <div class="form-group"><label for="description">Descrição</label><input type="text" id="description" placeholder="Ex: Fornecedor de matéria-prima, Cliente Y" required></div>
-                <div class="form-group"><label for="amount">Valor</label><input type="number" id="amount" placeholder="0,00" step="0.01" required></div>
-                <div class="form-group"><label for="date">Data da Nota</label><input type="date" id="date" required></div>
-                <div class="form-group"><label for="file">Anexar Nota Fiscal (Opcional)</label><input type="file" id="file"></div>
+                <div class="form-group">
+                    <label for="description">Descrição</label>
+                    <input type="text" id="description" placeholder="Ex: Aluguel do escritório" required>
+                </div>
+                <div class="form-group">
+                    <label for="amount">Valor</label>
+                    <input type="number" id="amount" placeholder="0,00" step="0.01" required>
+                </div>
+                <!-- NOVO CAMPO DE CATEGORIA -->
+                <div class="form-group">
+                    <label for="category">Categoria</label>
+                    <select id="category" required>
+                        <option value="" disabled selected>Selecione uma categoria...</option>
+                        <option value="Fixas">Contas Fixas (Aluguel, Luz)</option>
+                        <option value="Fornecedores">Fornecedores</option>
+                        <option value="Marketing">Marketing</option>
+                        <option value="Pessoal">Pessoal / Salários</option>
+                        <option value="Impostos">Impostos</option>
+                        <option value="Outros">Outras Despesas</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="date">Data da Nota</label>
+                    <input type="date" id="date" required>
+                </div>
                 <div class="form-actions">
                     <button type="button" class="form-btn cancel" id="cancel-btn">Cancelar</button>
                     <button type="submit" class="form-btn save">Salvar</button>
@@ -172,134 +208,81 @@
             </form>
         </div>
     </div>
+    
+    <!-- *** PASSO IMPORTANTE: INCLUIR O SDK DO FIREBASE *** -->
+    <!-- Substitua pelos scripts do SEU projeto Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
     <script>
+        // *** PASSO IMPORTANTE: CONFIGURAR O FIREBASE ***
+        // Substitua pelo SEU objeto de configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "SEU_API_KEY",
+            authDomain: "SEU_AUTH_DOMAIN",
+            projectId: "SEU_PROJECT_ID",
+            storageBucket: "SEU_STORAGE_BUCKET",
+            messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+            appId: "SEU_APP_ID"
+        };
+        // Inicializa o Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // JAVASCRIPT DO PAINEL
         document.addEventListener('DOMContentLoaded', () => {
 
-            const DOM = {
-                // ... (DOM selectors remain the same as before) ...
-                totalGanhos: document.getElementById('total-ganhos'),
-                totalGastos: document.getElementById('total-gastos'),
-                saldoMes: document.getElementById('saldo-mes'),
-                transactionList: document.getElementById('transaction-list'),
-                modalOverlay: document.getElementById('modal-overlay'),
-                transactionForm: document.getElementById('transaction-form'),
-                modalTitle: document.getElementById('modal-title'),
-                transactionTypeInput: document.getElementById('transaction-type'),
-                userGreeting: document.getElementById('user-greeting'),
-                addGastoBtn: document.getElementById('add-gasto-btn'),
-                addGanhoBtn: document.getElementById('add-ganho-btn'),
-                closeModalBtn: document.getElementById('close-modal-btn'),
-                cancelBtn: document.getElementById('cancel-btn'),
-            };
-
-            // STATE - O estado da nossa aplicação agora inclui o usuário atual
-            let currentUser = null;
             let transactions = [];
+            
+            // 1. VERIFICAR SE O USUÁRIO ESTÁ LOGADO
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    // Usuário está logado, vamos carregar os dados
+                    document.getElementById('user-email').textContent = user.email;
+                    loadTransactions(user.uid);
+                } else {
+                    // Usuário não está logado, redireciona para a página de login
+                    window.location.href = 'login.html';
+                }
+            });
+            
+            // 2. FUNÇÃO DE LOGOUT
+            document.getElementById('logout-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                auth.signOut(); // Desloga do Firebase
+            });
 
+            // 3. CARREGAR TRANSAÇÕES DO FIREBASE
+            function loadTransactions(userId) {
+                // db.collection('users').doc(userId).collection('transactions').orderBy('date', 'desc').onSnapshot(snapshot => {
+                //     transactions = [];
+                //     snapshot.forEach(doc => {
+                //         transactions.push({ id: doc.id, ...doc.data() });
+                //     });
+                //     App.updateUI();
+                // });
+                console.log('Simulando carregamento de dados do Firebase para o usuário:', userId);
+                transactions = []; // Começa vazio
+                App.updateUI(); // Atualiza a UI vazia
+            }
+            
             const App = {
-                init() {
-                    this.checkUser();
-                    this.setupEventListeners();
-                },
-
-                checkUser() {
-                    const savedUser = localStorage.getItem('currentUser_negocio');
-                    if (savedUser) {
-                        currentUser = savedUser;
-                        this.loadUserData();
-                    } else {
-                        this.promptNewUser();
-                    }
-                },
-
-                promptNewUser() {
-                    let userName = '';
-                    while (!userName || userName.trim() === '') {
-                        userName = prompt('Bem-vindo! Qual o nome do seu negócio ou seu nome?');
-                    }
-                    currentUser = userName.trim();
-                    localStorage.setItem('currentUser_negocio', currentUser);
-                    this.loadUserData();
-                },
-
-                loadUserData() {
-                    // Carrega os dados ESPECÍFICOS do usuário logado
-                    const userData = localStorage.getItem(`transactions_${currentUser}`);
-                    transactions = userData ? JSON.parse(userData) : []; // Se não houver dados, começa com um array vazio
-                    
-                    this.updateGreeting();
-                    this.updateUI();
-                },
-
-                updateGreeting() {
-                    DOM.userGreeting.innerHTML = `Negócio: <span id="user-name">${currentUser}</span>`;
-                },
-
-                switchUser() {
-                    const confirmation = confirm('Deseja trocar de negócio? Você será desconectado do negócio atual.');
-                    if (confirmation) {
-                        localStorage.removeItem('currentUser_negocio');
-                        location.reload(); // Recarrega a página para iniciar o processo de login
-                    }
-                },
-                
-                setupEventListeners() {
-                    DOM.userGreeting.addEventListener('click', this.switchUser.bind(this));
-                    // ... (outros event listeners permanecem os mesmos) ...
-                    DOM.addGastoBtn.addEventListener('click', () => this.Modal.open('gasto'));
-                    DOM.addGanhoBtn.addEventListener('click', () => this.Modal.open('ganho'));
-                    DOM.closeModalBtn.addEventListener('click', this.Modal.close);
-                    DOM.cancelBtn.addEventListener('click', this.Modal.close);
-                    DOM.modalOverlay.addEventListener('click', (e) => { if (e.target === DOM.modalOverlay) this.Modal.close(); });
-                    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && DOM.modalOverlay.classList.contains('active')) this.Modal.close(); });
-                    DOM.transactionForm.addEventListener('submit', this.addTransaction.bind(this));
-                    DOM.transactionList.addEventListener('click', this.handleListClick.bind(this));
-                },
-
+                // ... (muitas funções permanecem as mesmas) ...
                 updateUI() {
                     this.renderTransactions();
                     this.updateSummary();
-                    this.updateLocalStorage(); // Salva os dados do usuário atual
-                },
-                
-                formatCurrency: (value) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
-                
-                updateLocalStorage() {
-                    if (currentUser) {
-                        localStorage.setItem(`transactions_${currentUser}`, JSON.stringify(transactions));
-                    }
-                },
-                
-                Modal: { /* O código do Modal permanece o mesmo */ 
-                    open(type) {
-                        DOM.transactionTypeInput.value = type;
-                        DOM.modalTitle.textContent = type === 'ganho' ? 'Adicionar Receita' : 'Adicionar Despesa';
-                        document.getElementById('date').valueAsDate = new Date();
-                        DOM.modalOverlay.classList.add('active');
-                        document.getElementById('description').focus();
-                    },
-                    close() {
-                        DOM.modalOverlay.classList.remove('active');
-                        DOM.transactionForm.reset();
-                    }
                 },
 
-                updateSummary() { /* O código de updateSummary permanece o mesmo */
-                    const totalGanhos = transactions.filter(t => t.type === 'ganho').reduce((acc, t) => acc + t.amount, 0);
-                    const totalGastos = transactions.filter(t => t.type === 'gasto').reduce((acc, t) => acc + t.amount, 0);
-                    const saldo = totalGanhos - totalGastos;
-                    DOM.totalGanhos.textContent = this.formatCurrency(totalGanhos);
-                    DOM.totalGastos.textContent = this.formatCurrency(totalGastos);
-                    DOM.saldoMes.textContent = this.formatCurrency(saldo);
-                    DOM.saldoMes.className = saldo >= 0 ? 'positive' : 'negative';
-                },
-
-                renderTransactions() { /* O código de renderTransactions permanece o mesmo */
-                    DOM.transactionList.innerHTML = '';
+                renderTransactions() {
+                    // ... Lógica de renderização agora inclui a categoria
+                    const transactionList = document.getElementById('transaction-list');
+                    transactionList.innerHTML = '';
                     const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
 
                     sortedTransactions.forEach(t => {
+                        // ... (código de ícones e cores) ...
                         const isGasto = t.type === 'gasto';
                         const icon = isGasto ? '🧾' : '💵';
                         const amountSign = isGasto ? '-' : '+';
@@ -309,17 +292,14 @@
                         const listItem = document.createElement('li');
                         listItem.classList.add('transaction-item');
                         listItem.dataset.id = t.id;
-                        if (t.isNew) {
-                            listItem.classList.add('new-transaction');
-                            delete t.isNew;
-                        }
                         
+                        // HTML para o item da lista, agora com a tag de categoria
                         listItem.innerHTML = `
                             <div class="transaction-details">
                                 <div class="transaction-icon ${typeClass}">${icon}</div>
                                 <div>
                                     <p class="description">${t.description}</p>
-                                    <p class="date">Data da nota: ${new Date(t.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</p>
+                                    ${t.category ? `<span class="category-tag">${t.category}</span>` : ''}
                                 </div>
                             </div>
                             <div class="transaction-actions">
@@ -327,48 +307,111 @@
                                 <button class="delete-btn" title="Excluir lançamento">🗑️</button>
                             </div>
                         `;
-                        DOM.transactionList.appendChild(listItem);
+                        transactionList.appendChild(listItem);
                     });
                 },
 
-                addTransaction(e) { /* O código de addTransaction permanece o mesmo */
+                addTransaction(e) {
                     e.preventDefault();
+                    // ... (pegar description, amount, date) ...
                     const description = document.getElementById('description').value;
                     const amount = parseFloat(document.getElementById('amount').value);
                     const date = document.getElementById('date').value;
-                    const type = DOM.transactionTypeInput.value;
+                    const type = document.getElementById('transaction-type').value;
+                    const category = document.getElementById('category').value; // PEGA A CATEGORIA
 
-                    if (description.trim() === '' || isNaN(amount) || amount <= 0 || date === '') {
-                        alert('Por favor, preencha todos os campos corretamente.');
-                        return;
-                    }
+                    const newTransaction = {
+                        type, description, amount, date, category, // ADICIONA A CATEGORIA AO OBJETO
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp() // Para ordenar
+                    };
 
-                    const newTransaction = { id: Date.now(), type, description, amount, date, isNew: true };
-                    transactions.unshift(newTransaction);
+                    // *** PONTO DE INTEGRAÇÃO COM FIREBASE ***
+                    // const userId = auth.currentUser.uid;
+                    // db.collection('users').doc(userId).collection('transactions').add(newTransaction);
+                    
+                    console.log('Simulando salvamento no Firebase:', newTransaction);
+                    transactions.unshift({id: Date.now().toString(), ...newTransaction}); // Simulação local
                     this.updateUI();
+
                     this.Modal.close();
                 },
-                
-                handleListClick(e) { /* O código de handleListClick permanece o mesmo */
-                    if (e.target.classList.contains('delete-btn')) {
-                        const listItem = e.target.closest('.transaction-item');
-                        const transactionId = Number(listItem.dataset.id);
-                        this.removeTransaction(transactionId, listItem);
-                    }
+
+                removeTransaction(id) {
+                    // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAis9udhxjOP2I-7MzhgoXo6wbekWkkbF4",
+  authDomain: "controle-de-negocio2.firebaseapp.com",
+  projectId: "controle-de-negocio2",
+  storageBucket: "controle-de-negocio2.firebasestorage.app",
+  messagingSenderId: "382496322313",
+  appId: "1:382496322313:web:90eb6ef5efbcffcb3719d8"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+                    // const userId = auth.currentUser.uid;
+                    // db.collection('users').doc(userId).collection('transactions').doc(id).delete();
+                    
+                    console.log('Simulando exclusão no Firebase do item:', id);
+                    transactions = transactions.filter(t => t.id !== id); // Simulação local
+                    this.updateUI();
                 },
 
-                removeTransaction(id, element) { /* O código de removeTransaction permanece o mesmo */
-                    const confirmation = confirm('Tem certeza que deseja excluir este lançamento? Esta ação não pode ser desfeita.');
-                    if (!confirmation) return;
-                    element.classList.add('removing');
-                    element.addEventListener('animationend', () => {
-                        transactions = transactions.filter(t => t.id !== id);
-                        this.updateUI();
-                    });
+                // O restante das funções (Modal, formatCurrency, etc.) pode ser mantido
+                // ...
+                 Modal: {
+                    open(type) {
+                        const categoryField = document.getElementById('category');
+                        if (type === 'ganho') {
+                            categoryField.disabled = true;
+                            categoryField.required = false;
+                            categoryField.value = '';
+                        } else {
+                            categoryField.disabled = false;
+                            categoryField.required = true;
+                        }
+                        document.getElementById('transaction-type').value = type;
+                        document.getElementById('modal-title').textContent = type === 'ganho' ? 'Adicionar Receita' : 'Adicionar Despesa';
+                        document.getElementById('date').valueAsDate = new Date();
+                        document.getElementById('modal-overlay').classList.add('active');
+                        document.getElementById('description').focus();
+                    },
+                    close() {
+                        document.getElementById('modal-overlay').classList.remove('active');
+                        document.getElementById('transaction-form').reset();
+                    }
+                },
+                 handleListClick(e) {
+                    if (e.target.classList.contains('delete-btn')) {
+                        const listItem = e.target.closest('.transaction-item');
+                        const transactionId = listItem.dataset.id;
+                        if(confirm('Tem certeza?')) this.removeTransaction(transactionId);
+                    }
+                },
+                 formatCurrency: (value) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+                 updateSummary() {
+                    const totalGanhos = transactions.filter(t => t.type === 'ganho').reduce((acc, t) => acc + t.amount, 0);
+                    const totalGastos = transactions.filter(t => t.type === 'gasto').reduce((acc, t) => acc + t.amount, 0);
+                    const saldo = totalGanhos - totalGastos;
+                    document.getElementById('total-ganhos').textContent = this.formatCurrency(totalGanhos);
+                    document.getElementById('total-gastos').textContent = this.formatCurrency(totalGastos);
+                    document.getElementById('saldo-mes').textContent = this.formatCurrency(saldo);
+                    document.getElementById('saldo-mes').className = saldo >= 0 ? 'positive' : 'negative';
                 }
             };
-
-            App.init();
+            
+            // Inicializa os listeners do App
+            document.getElementById('add-gasto-btn').addEventListener('click', () => App.Modal.open('gasto'));
+            document.getElementById('add-ganho-btn').addEventListener('click', () => App.Modal.open('ganho'));
+            document.getElementById('close-modal-btn').addEventListener('click', App.Modal.close);
+            document.getElementById('cancel-btn').addEventListener('click', App.Modal.close);
+            document.getElementById('transaction-form').addEventListener('submit', (e) => App.addTransaction(e));
+            document.getElementById('transaction-list').addEventListener('click', (e) => App.handleListClick(e));
         });
     </script>
 </body>
