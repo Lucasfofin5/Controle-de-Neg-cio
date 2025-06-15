@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { /* Usando as mesmas variáveis de design */
+        :root {
             --cor-primaria: #2c3e50; --cor-secundaria: #3498db; --cor-sucesso: #2ecc71;
             --cor-fundo: #f4f7f9; --cor-texto: #34495e; --cor-cartao: #ffffff;
             --sombra-suave: 0 4px 15px rgba(0, 0, 0, 0.08); --borda-radius: 12px;
@@ -40,27 +40,35 @@
             outline: none; border-color: var(--cor-secundaria);
             box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
         }
-        
-        /* --- ESTILOS PARA O BOTÃO DE VER SENHA --- */
         .password-wrapper {
             position: relative;
             display: flex;
             align-items: center;
         }
-        .password-wrapper input {
-            padding-right: 3rem; /* Espaço para o ícone */
-        }
+        .password-wrapper input { padding-right: 3rem; }
         .toggle-password {
-            position: absolute;
-            right: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            font-size: 1.3rem;
-            color: #aaa;
-            user-select: none; /* Impede que o ícone seja selecionado como texto */
+            position: absolute; right: 1rem; top: 50%;
+            transform: translateY(-50%); cursor: pointer;
+            font-size: 1.3rem; color: #aaa; user-select: none;
         }
-        /* --- FIM DOS ESTILOS --- */
+        
+        /* NOVO: Estilos para "Manter conectado" */
+        .form-options {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .form-options label {
+            margin-left: 0.5rem;
+            font-weight: 400;
+            font-size: 0.9rem;
+            color: var(--cor-texto);
+            cursor: pointer;
+        }
+        .form-options input[type="checkbox"] {
+            width: auto;
+            cursor: pointer;
+        }
 
         .form-btn {
             width: 100%; padding: 1rem; border: none; border-radius: 8px;
@@ -69,14 +77,8 @@
             transition: background-color 0.3s ease;
         }
         .form-btn:hover { background-color: #2980b9; }
-        .toggle-form {
-            margin-top: 1.5rem; color: var(--cor-texto);
-            font-size: 0.9rem;
-        }
-        .toggle-form a {
-            color: var(--cor-secundaria); text-decoration: none;
-            font-weight: 600; cursor: pointer;
-        }
+        .toggle-form { margin-top: 1.5rem; color: var(--cor-texto); font-size: 0.9rem; }
+        .toggle-form a { color: var(--cor-secundaria); text-decoration: none; font-weight: 600; cursor: pointer; }
         .error-message { color: #e74c3c; margin-top: 1rem; display: none; }
         @keyframes fadeInPage { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
     </style>
@@ -91,16 +93,22 @@
         <form id="login-form">
             <div class="form-group">
                 <label for="email">Email</label>
-                <input type="email" id="email" required>
+                <input type="email" id="email" required autocomplete="email">
             </div>
             <div class="form-group">
                 <label for="password">Senha</label>
-                <!-- AQUI ESTÁ A IMPLEMENTAÇÃO DO CAMPO DE SENHA COM O ÍCONE -->
                 <div class="password-wrapper">
-                    <input type="password" id="password" required>
+                    <input type="password" id="password" required autocomplete="current-password">
                     <span class="toggle-password" id="toggle-password">👁️</span>
                 </div>
             </div>
+            
+            <!-- NOVO: Checkbox para manter conectado -->
+            <div class="form-options" id="remember-me-container">
+                <input type="checkbox" id="remember-me">
+                <label for="remember-me">Manter conectado</label>
+            </div>
+
             <button type="submit" class="form-btn" id="main-btn">Entrar</button>
         </form>
 
@@ -115,9 +123,16 @@
 <script type="module">
   // 1. IMPORTAMOS AS FUNÇÕES QUE VAMOS USAR
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+  import { 
+      getAuth, 
+      createUserWithEmailAndPassword, 
+      signInWithEmailAndPassword,
+      setPersistence, // NOVO
+      browserLocalPersistence, // NOVO: Persistência longa (navegador fechado)
+      browserSessionPersistence // NOVO: Persistência de sessão (padrão)
+  } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
 
-  // 2. SUA CONFIGURAÇÃO DO FIREBASE (JÁ ESTÁ CORRETA AQUI)
+  // 2. SUA CONFIGURAÇÃO DO FIREBASE
   const firebaseConfig = {
     apiKey: "AIzaSyAis9udhxjOP2I-7MzhgoXo6wbekWkkbF4",
     authDomain: "controle-de-negocio2.firebaseapp.com",
@@ -137,26 +152,16 @@
   const mainBtn = document.getElementById('main-btn');
   const toggleFormContainer = document.querySelector('.toggle-form');
   const errorMessage = document.getElementById('error-message');
-  
-  // ELEMENTOS PARA A FUNCIONALIDADE DE VER SENHA
   const passwordInput = document.getElementById('password');
   const togglePassword = document.getElementById('toggle-password');
+  const rememberMeContainer = document.getElementById('remember-me-container'); // NOVO
 
   let isLogin = true;
 
-  // EVENT LISTENER PARA O ÍCONE DO OLHO
   togglePassword.addEventListener('click', () => {
-      // Verifica o tipo atual do campo de senha
       const isPassword = passwordInput.type === 'password';
-      
-      // Alterna o tipo do input e o ícone
-      if (isPassword) {
-          passwordInput.type = 'text';
-          togglePassword.textContent = '🙈'; // Ícone de olho fechado/coberto
-      } else {
-          passwordInput.type = 'password';
-          togglePassword.textContent = '👁️'; // Ícone de olho aberto
-      }
+      passwordInput.type = isPassword ? 'text' : 'password';
+      togglePassword.textContent = isPassword ? '🙈' : '👁️';
   });
 
   toggleFormContainer.addEventListener('click', (event) => {
@@ -168,10 +173,12 @@
           if (isLogin) {
               formTitle.textContent = 'Acesse sua conta para continuar';
               mainBtn.textContent = 'Entrar';
+              rememberMeContainer.style.display = 'flex'; // MOSTRA o checkbox
               toggleFormContainer.querySelector('p').innerHTML = 'Não tem uma conta? <a href="#" id="toggle-link">Crie uma agora</a>';
           } else {
               formTitle.textContent = 'Crie sua conta gratuitamente';
               mainBtn.textContent = 'Criar Conta';
+              rememberMeContainer.style.display = 'none'; // ESCONDE o checkbox
               toggleFormContainer.querySelector('p').innerHTML = 'Já tem uma conta? <a href="#" id="toggle-link">Acesse aqui</a>';
           }
       }
@@ -180,21 +187,30 @@
   loginForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const email = document.getElementById('email').value;
-      const password = passwordInput.value; // Usando a referência que já temos
+      const password = passwordInput.value;
       errorMessage.style.display = 'none';
 
       if (isLogin) {
-          // Lógica de Login
-          signInWithEmailAndPassword(auth, email, password)
+          // --- LÓGICA DE LOGIN ATUALIZADA ---
+          const rememberMe = document.getElementById('remember-me').checked;
+          const persistenceType = rememberMe ? browserLocalPersistence : browserSessionPersistence;
+
+          setPersistence(auth, persistenceType)
+              .then(() => {
+                  // Após definir a persistência, faz o login
+                  return signInWithEmailAndPassword(auth, email, password);
+              })
               .then((userCredential) => {
                   window.location.href = 'dashboard.html';
               })
               .catch((error) => {
+                  console.error("Erro de login:", error.code, error.message);
                   errorMessage.textContent = "Email ou senha incorretos.";
                   errorMessage.style.display = 'block';
               });
+
       } else {
-          // Lógica de Criação de Conta
+          // Lógica de Criação de Conta (sem alterações)
           if (password.length < 6) {
                errorMessage.textContent = "A senha precisa ter pelo menos 6 caracteres.";
                errorMessage.style.display = 'block';
