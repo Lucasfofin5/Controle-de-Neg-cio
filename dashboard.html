@@ -59,6 +59,7 @@
         .logo h1 { font-size: 2.2rem; font-weight: 600; color: var(--cor-primaria); }
         .logo h1::before { content: '💼'; margin-right: 12px; font-size: 2rem; }
         
+        /* NOVO: Container para controles do cabeçalho */
         .header-controls { display: flex; align-items: center; gap: 1rem; }
 
         .user-greeting {
@@ -71,6 +72,7 @@
         #user-email { font-weight: 600; color: var(--cor-secundaria); }
         #logout-btn { margin-left:1rem; color: var(--cor-alerta); font-weight: 600; text-decoration: none; }
         
+        /* NOVO: Estilo para o botão de tema */
         .theme-toggle-btn {
             background: none;
             border: 2px solid var(--cor-borda);
@@ -98,7 +100,7 @@
         .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
         .action-btn {
             display: flex; align-items: center; justify-content: center; padding: 1.5rem;
-            border-radius: var(--borda-radius); text-decoration: none; color: #fff;
+            border-radius: var(--borda-radius); text-decoration: none; color: #fff; /* Cor do texto é sempre branca */
             font-size: 1.2rem; font-weight: 500; transition: var(--transicao-suave);
             box-shadow: var(--sombra-suave); cursor: pointer; border: none;
         }
@@ -166,6 +168,7 @@
             outline: none; border-color: var(--cor-secundaria);
             box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.25);
         }
+        /* ...resto do CSS praticamente idêntico... */
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
         .close-modal { font-size: 2rem; cursor: pointer; color: #aaa; transition: color 0.2s; line-height: 1; border: none; background: none; }
         .close-modal:hover { color: var(--cor-alerta); }
@@ -176,52 +179,8 @@
         .form-btn.save { background-color: var(--cor-sucesso); color: white; }
         .form-btn.save:hover { filter: brightness(1.1); }
         .form-btn.cancel { background-color: #e0e0e0; color: var(--cor-texto); }
-        html.dark-mode .form-btn.cancel { background-color: #3a4a64; color: var(--primaria); }
+        html.dark-mode .form-btn.cancel { background-color: #3a4a64; color: var(--cor-primaria); }
         .form-btn.cancel:hover { filter: brightness(1.2); }
-        
-        /* --- ESTILOS PARA NOTIFICAÇÃO (TOAST) --- */
-        .notification-toast {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background-color: var(--cor-cartao);
-            color: var(--cor-texto);
-            padding: 1rem 1.5rem;
-            border-radius: var(--borda-radius);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
-            z-index: 2000;
-            display: flex;
-            align-items: center;
-            font-weight: 500;
-            
-            visibility: hidden;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.4s ease-in-out;
-        }
-        .notification-toast.show {
-            visibility: visible;
-            opacity: 1;
-            transform: translateY(0);
-        }
-        .notification-toast.success {
-            border-left: 5px solid var(--cor-sucesso);
-        }
-        .notification-toast.error {
-            border-left: 5px solid var(--cor-alerta);
-        }
-        .notification-toast.success::before {
-            content: '✅';
-            margin-right: 12px;
-        }
-        .notification-toast.error::before {
-            content: '❌';
-            margin-right: 12px;
-        }
-        html.dark-mode .notification-toast {
-            box-shadow: 0 5px 25px rgba(0,0,0,0.3);
-        }
-        
         @keyframes fadeInPage { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @media (max-width: 600px) {
             html { font-size: 14px; }
@@ -235,16 +194,19 @@
     <div class="container">
         <header>
             <div class="logo"><h1>Controle de Negócio</h1></div>
+            <!-- NOVO: Container para agrupar saudação e botão de tema -->
             <div class="header-controls">
                 <div class="user-greeting">
                     Olá, <span id="user-email">...</span>
                     <a href="#" id="logout-btn">Sair</a>
                 </div>
+                <!-- NOVO: Botão de alternância de tema -->
                 <button id="theme-toggle-btn" title="Alterar tema">🌙</button>
             </div>
         </header>
 
         <main>
+            <!-- O resto do HTML é o mesmo -->
             <section class="actions">
                 <button class="action-btn gasto" id="add-gasto-btn"><span>-</span> Adicionar Despesa</button>
                 <button class="action-btn ganho" id="add-ganho-btn"><span>+</span> Adicionar Receita</button>
@@ -260,11 +222,6 @@
             <section class="card recent-transactions">
                 <h2>Últimos Lançamentos</h2>
                 <ul id="transaction-list" class="transaction-list"></ul>
-                <section class="card">
-  <h2>Download do App</h2>
-  <a href="meuapp.apk" download style="color: var(--cor-secundaria); font-weight: bold;">📲 Baixar APK do App</a>
-</section>
-
             </section>
         </main>
     </div>
@@ -310,11 +267,6 @@
         </div>
     </div>
     
-    <!-- Elemento para Notificações (Toast) -->
-    <div id="notification-toast" class="notification-toast">
-        <span id="notification-message"></span>
-    </div>
-    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
@@ -341,8 +293,10 @@
     let transactions = [];
     let currentUser = null;
 
+    // --- NOVO: LÓGICA DO MODO ESCURO ---
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
     
+    // Define o ícone inicial do botão baseado no tema salvo
     if (localStorage.getItem('theme') === 'dark') {
         themeToggleBtn.textContent = '☀️';
     }
@@ -353,12 +307,13 @@
         
         if (isDarkMode) {
             localStorage.setItem('theme', 'dark');
-            themeToggleBtn.textContent = '☀️';
+            themeToggleBtn.textContent = '☀️'; // Mudar para ícone de sol
         } else {
             localStorage.setItem('theme', 'light');
-            themeToggleBtn.textContent = '🌙';
+            themeToggleBtn.textContent = '🌙'; // Mudar para ícone de lua
         }
     });
+    // --- FIM DA LÓGICA DO MODO ESCURO ---
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
@@ -389,8 +344,6 @@
     }
 
     const App = {
-        notificationTimer: null,
-
         updateUI() { this.renderTransactions(); this.updateSummary(); },
         addTransaction(e) {
             e.preventDefault();
@@ -406,30 +359,13 @@
             }
             const newTransaction = { type, description, amount, date, category };
             const transactionsCollection = collection(db, 'users', currentUser.uid, 'transactions');
-            
-            addDoc(transactionsCollection, newTransaction)
-                .then(() => {
-                    const message = type === 'gasto' ? 'Despesa adicionada!' : 'Receita adicionada!';
-                    this.showNotification(message, 'success');
-                    // MELHORIA: Fechar o modal apenas depois que a operação for um sucesso.
-                    this.Modal.close(); 
-                })
-                .catch(error => {
-                    console.error("Erro ao adicionar transação:", error);
-                    this.showNotification('Erro ao salvar transação.', 'error');
-                });
+            addDoc(transactionsCollection, newTransaction).catch(error => console.error("Erro ao adicionar transação:", error));
+            this.Modal.close();
         },
         removeTransaction(id) {
             if (confirm('Tem certeza que deseja excluir este lançamento?')) {
                 const transactionDoc = doc(db, 'users', currentUser.uid, 'transactions', id);
-                deleteDoc(transactionDoc)
-                    .then(() => {
-                        this.showNotification('Lançamento excluído com sucesso!', 'success');
-                    })
-                    .catch(error => {
-                        console.error("Erro ao deletar transação:", error);
-                        this.showNotification('Erro ao excluir lançamento.', 'error');
-                    });
+                deleteDoc(transactionDoc).catch(error => console.error("Erro ao deletar transação:", error));
             }
         },
         renderTransactions() {
@@ -482,7 +418,6 @@
                 }
                 document.getElementById('transaction-type').value = type;
                 document.getElementById('modal-title').textContent = type === 'ganho' ? 'Adicionar Receita' : 'Adicionar Despesa';
-                // CORREÇÃO: Removido o 'new' extra.
                 document.getElementById('date').valueAsDate = new Date();
                 document.getElementById('modal-overlay').classList.add('active');
                 document.getElementById('description').focus();
@@ -498,25 +433,7 @@
                 this.removeTransaction(listItem.dataset.id);
             }
         },
-        formatCurrency: (value) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
-        
-        showNotification(message, type = 'success') {
-            const toast = document.getElementById('notification-toast');
-            const messageEl = document.getElementById('notification-message');
-
-            if (this.notificationTimer) {
-                clearTimeout(this.notificationTimer);
-            }
-
-            messageEl.textContent = message;
-            toast.className = 'notification-toast';
-            toast.classList.add(type);
-            toast.classList.add('show');
-
-            this.notificationTimer = setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
-        }
+        formatCurrency: (value) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
     };
     
     document.getElementById('add-gasto-btn').addEventListener('click', () => App.Modal.open('gasto'));
