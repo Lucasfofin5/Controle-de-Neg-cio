@@ -44,10 +44,15 @@
         h2 { font-size: 1.2rem; font-weight: 500; margin-bottom: 1rem; color: var(--cor-primaria); opacity: 0.8; }
         .card-header { display: flex; justify-content: space-between; align-items: center; }
         .card-header button { background-color: transparent; border: 1px solid var(--cor-borda); color: var(--cor-texto); padding: 0.3rem 0.8rem; border-radius: 8px; cursor: pointer; }
-        .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-        .action-btn { display: flex; align-items: center; justify-content: center; padding: 1.5rem; border-radius: var(--borda-radius); text-decoration: none; color: #fff; font-size: 1.2rem; border: none; }
-        .action-btn.gasto { background: linear-gradient(45deg, var(--cor-alerta), #f1c40f); }
-        .action-btn.ganho { background: linear-gradient(45deg, var(--cor-sucesso), var(--cor-secundaria)); }
+        /* ALTERADO: Grade com 3 colunas para as ações */
+        .actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .action-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; border-radius: var(--borda-radius); text-decoration: none; color: #fff; font-size: 1.1rem; border: none; font-weight: 500; gap: 0.5rem;}
+        .action-btn span { font-size: 1.8rem; line-height: 1; }
+        .action-btn.gasto { background: linear-gradient(45deg, #e74c3c, #f1c40f); }
+        .action-btn.ganho { background: linear-gradient(45deg, #2ecc71, #3498db); }
+        /* NOVO: Estilo para o botão de precificação */
+        .action-btn.pricing { background: linear-gradient(45deg, #3498db, #8e44ad); }
+
         .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; text-align: center; }
         .goal-item { margin-bottom: 1.5rem; } .goal-item:last-child { margin-bottom: 0; }
         .goal-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem; }
@@ -76,25 +81,27 @@
         .form-group { margin-bottom: 1rem; }
         .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-        /* ALTERADO: Ajustes para acomodar o novo checkbox */
         .form-actions { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: 1.5rem; }
         .form-btn { padding: 0.8rem 1.5rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 500; cursor: pointer; transition: var(--transicao-suave); }
         .form-btn.save { background-color: var(--cor-sucesso); color: white; } .form-btn.cancel { background-color: #e0e0e0; color: var(--cor-texto); }
         html.dark-mode .form-btn.cancel { background-color: #3a4a64; color: var(--cor-primaria); }
         #notification-permission-link { font-size: 0.9rem; color: var(--cor-secundaria); text-decoration: underline; cursor: pointer; }
+        .keep-open-option { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--cor-texto); cursor: pointer; }
+        .keep-open-option input[type="checkbox"] { width: auto; cursor: pointer; }
+        .form-actions-buttons { display: flex; gap: 1rem; }
+        /* NOVO: Estilos para a calculadora de precificação */
+        .pricing-result { margin-top: 1.5rem; padding: 1rem; background-color: var(--cor-fundo); border-radius: var(--borda-radius); text-align: center; border: 2px dashed var(--cor-sucesso); }
+        .pricing-result p { margin: 0; font-size: 1rem; color: var(--cor-texto); }
+        .pricing-result .price-value { font-size: 2rem; font-weight: 700; color: var(--cor-sucesso); margin-top: 0.5rem; }
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
         .toast { display: flex; align-items: center; background-color: var(--cor-cartao); color: var(--cor-texto); padding: 12px 20px; border-radius: var(--borda-radius); box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-left: 5px solid; min-width: 280px; opacity: 0; transform: translateX(100%); animation: toastIn 0.5s forwards, toastOut 0.5s 3s forwards; }
         .toast-icon { font-size: 1.5rem; margin-right: 15px; }
         .toast.success { border-color: var(--cor-sucesso); } .toast.success .toast-icon { color: var(--cor-sucesso); }
         .toast.info { border-color: var(--cor-secundaria); } .toast.info .toast-icon { color: var(--cor-secundaria); }
         .toast.error { border-color: var(--cor-alerta); } .toast.error .toast-icon { color: var(--cor-alerta); }
-        /* NOVO: Estilos para a opção de manter aberto */
-        .keep-open-option { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--cor-texto); cursor: pointer; }
-        .keep-open-option input[type="checkbox"] { width: auto; cursor: pointer; }
-        .form-actions-buttons { display: flex; gap: 1rem; }
         @keyframes toastIn { to { opacity: 1; transform: translateX(0); } }
         @keyframes toastOut { to { opacity: 0; transform: translateX(100%); } }
-        @media (max-width: 600px) { .chart-container { height: 250px; } }
+        @media (max-width: 600px) { .chart-container { height: 250px; } .actions { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -108,6 +115,8 @@
             <section class="actions">
                 <button class="action-btn gasto" id="add-gasto-btn"><span>-</span> Adicionar Despesa</button>
                 <button class="action-btn ganho" id="add-ganho-btn"><span>+</span> Adicionar Receita</button>
+                <!-- NOVO: Botão para abrir o modal de precificação -->
+                <button class="action-btn pricing" id="pricing-btn"><span>💰</span> Calculadora de Preço</button>
             </section>
             
             <section class="card goals-card">
@@ -129,22 +138,43 @@
 
     <div class="modal-overlay" id="transaction-modal-overlay">
         <div class="modal-content"><div class="modal-header"><h2 id="modal-title"></h2><button class="close-modal" data-modal-id="transaction-modal-overlay">×</button></div><form id="transaction-form"><input type="hidden" id="transaction-type"><div class="form-group"><label for="description">Descrição</label><input type="text" id="description" required></div><div class="form-group"><label for="amount">Valor</label><input type="number" id="amount" step="0.01" required></div><div class="form-group"><label for="category">Categoria</label><select id="category" required><option value="" disabled selected>Selecione...</option><option value="Fixas">Contas Fixas</option><option value="Fornecedores">Fornecedores</option><option value="Marketing">Marketing</option><option value="Pessoal">Pessoal / Salários</option><option value="Impostos">Impostos</option><option value="Outros">Outras Despesas</option></select></div><div class="form-group"><label for="date">Data (opcional)</label><input type="date" id="date"></div>
-            <div class="form-actions">
-                <!-- NOVO: Checkbox para manter o modal aberto -->
-                <label class="keep-open-option">
-                    <input type="checkbox" id="keep-modal-open">
-                    Manter aberto para novo lançamento
-                </label>
-                <div class="form-actions-buttons">
-                    <button type="button" class="form-btn cancel" data-modal-id="transaction-modal-overlay">Cancelar</button>
-                    <button type="submit" class="form-btn save">Salvar</button>
-                </div>
-            </div>
+            <div class="form-actions"><label class="keep-open-option"><input type="checkbox" id="keep-modal-open">Manter aberto para novo lançamento</label><div class="form-actions-buttons"><button type="button" class="form-btn cancel" data-modal-id="transaction-modal-overlay">Cancelar</button><button type="submit" class="form-btn save">Salvar</button></div></div>
         </form></div>
     </div>
     
     <div class="modal-overlay" id="goals-modal-overlay">
         <div class="modal-content"><div class="modal-header"><h2>Definir Metas Mensais</h2><button class="close-modal" data-modal-id="goals-modal-overlay">×</button></div><form id="goals-form"><div class="form-group"><label for="goal-revenue">Meta de Receita (R$)</label><input type="number" id="goal-revenue" step="100"></div><div class="form-group"><label for="goal-expense">Limite de Despesas (R$)</label><input type="number" id="goal-expense" step="100"></div><div class="form-actions"><button type="button" class="form-btn cancel" data-modal-id="goals-modal-overlay">Cancelar</button><button type="submit" class="form-btn save">Salvar Metas</button></div></form></div>
+    </div>
+
+    <!-- NOVO: Modal da Calculadora de Precificação -->
+    <div class="modal-overlay" id="pricing-modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Calculadora de Preço de Venda</h2>
+                <button class="close-modal" data-modal-id="pricing-modal-overlay">×</button>
+            </div>
+            <form id="pricing-form">
+                <div class="form-group">
+                    <label for="fixed-cost">Custo Fixo do Produto (R$)</label>
+                    <input type="number" id="fixed-cost" step="0.01" placeholder="Ex: 50.00" required>
+                </div>
+                <div class="form-group">
+                    <label for="variable-costs">Custos Variáveis (Impostos, Comissões, etc.) (%)</label>
+                    <input type="number" id="variable-costs" step="0.1" placeholder="Ex: 15" required>
+                </div>
+                <div class="form-group">
+                    <label for="profit-margin">Margem de Lucro Desejada (%)</label>
+                    <input type="number" id="profit-margin" step="1" placeholder="Ex: 30" required>
+                </div>
+                <div class="form-actions" style="justify-content: flex-end;">
+                    <button type="submit" class="form-btn save">Calcular Preço</button>
+                </div>
+            </form>
+            <div id="pricing-result-container" class="pricing-result hidden">
+                <p>O preço de venda sugerido é:</p>
+                <div id="suggested-price" class="price-value">R$ 0,00</div>
+            </div>
+        </div>
     </div>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -201,6 +231,38 @@
             toastContainer.appendChild(toast);
             setTimeout(() => toast.remove(), 3500);
         },
+        
+        // NOVO: Função para calcular o preço de venda
+        calculatePrice(e) {
+            e.preventDefault();
+            const resultContainer = document.getElementById('pricing-result-container');
+            const fixedCost = parseFloat(document.getElementById('fixed-cost').value) || 0;
+            const variableCostsPercent = (parseFloat(document.getElementById('variable-costs').value) || 0) / 100;
+            const profitMarginPercent = (parseFloat(document.getElementById('profit-margin').value) || 0) / 100;
+
+            if (fixedCost <= 0) {
+                this.showToast('O custo fixo deve ser maior que zero.', 'error');
+                return;
+            }
+
+            const totalPercent = variableCostsPercent + profitMarginPercent;
+            if (totalPercent >= 1) {
+                this.showToast('A soma dos custos variáveis e da margem de lucro não pode ser 100% ou mais.', 'error');
+                resultContainer.classList.add('hidden');
+                return;
+            }
+
+            const sellingPrice = fixedCost / (1 - totalPercent);
+
+            if (isNaN(sellingPrice) || sellingPrice <= 0) {
+                this.showToast('Não foi possível calcular o preço com os valores fornecidos.', 'error');
+                resultContainer.classList.add('hidden');
+                return;
+            }
+
+            document.getElementById('suggested-price').textContent = this.formatCurrency(sellingPrice);
+            resultContainer.classList.remove('hidden');
+        },
 
         saveGoals(e) {
             e.preventDefault();
@@ -216,7 +278,6 @@
                 .catch(error => this.showToast('Erro ao salvar metas.', 'error'));
         },
         
-        // ALTERADO: Lógica para manter o modal aberto se a opção estiver marcada
         addTransaction(e) {
             e.preventDefault();
             const newTransaction = {
@@ -236,15 +297,10 @@
                     const keepOpenCheckbox = document.getElementById('keep-modal-open');
                     
                     if (keepOpenCheckbox.checked) {
-                        // Limpa os campos para o próximo lançamento, mas mantém o modal aberto
                         document.getElementById('description').value = '';
                         document.getElementById('amount').value = '';
-                        // Opcional: limpa outros campos se desejar
-                        // document.getElementById('date').value = '';
-                        // document.getElementById('category').selectedIndex = 0;
-                        document.getElementById('description').focus(); // Foca no primeiro campo para agilizar
+                        document.getElementById('description').focus();
                     } else {
-                        // Comportamento original: fecha o modal
                         this.Modal.close('transaction-modal-overlay');
                     }
                 })
@@ -360,6 +416,10 @@
         Modal: {
             open(modalId, type) {
                 const modal = document.getElementById(modalId);
+                // Limpar resultados antigos ao abrir o modal de precificação
+                if (modalId === 'pricing-modal-overlay') {
+                    document.getElementById('pricing-result-container').classList.add('hidden');
+                }
                 if (modalId === 'transaction-modal-overlay') {
                     modal.querySelector('#modal-title').textContent = type === 'ganho' ? 'Adicionar Receita' : 'Adicionar Despesa';
                     modal.querySelector('#transaction-type').value = type;
@@ -438,9 +498,16 @@
     document.getElementById('add-gasto-btn').addEventListener('click', () => App.Modal.open('transaction-modal-overlay', 'gasto'));
     document.getElementById('add-ganho-btn').addEventListener('click', () => App.Modal.open('transaction-modal-overlay', 'ganho'));
     document.getElementById('set-goals-btn').addEventListener('click', () => App.Modal.open('goals-modal-overlay'));
+    // NOVO: Listener para o botão de precificação
+    document.getElementById('pricing-btn').addEventListener('click', () => App.Modal.open('pricing-modal-overlay'));
+
     document.querySelectorAll('.close-modal, .form-btn.cancel').forEach(btn => btn.addEventListener('click', () => App.Modal.close(btn.dataset.modalId)));
+    
     document.getElementById('transaction-form').addEventListener('submit', (e) => App.addTransaction(e));
     document.getElementById('goals-form').addEventListener('submit', (e) => App.saveGoals(e));
+    // NOVO: Listener para o form de precificação
+    document.getElementById('pricing-form').addEventListener('submit', (e) => App.calculatePrice(e));
+
     document.getElementById('transaction-list').addEventListener('click', (e) => App.handleListClick(e));
   });
 </script>
