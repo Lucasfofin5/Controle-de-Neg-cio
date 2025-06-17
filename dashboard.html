@@ -65,7 +65,7 @@
         .hidden { display: none !important; }
         .chart-container { position: relative; height: 350px; width: 100%; }
         .transaction-list { list-style: none; } .transaction-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--cor-borda); }
-        .delete-btn, .remove-component-btn { background: none; border: none; font-size: 1.2rem; color: #bdc3c7; cursor: pointer; transition: color 0.2s, transform 0.2s; }
+        .delete-btn, .remove-component-btn { background: none; border: none; font-size: 1.2rem; color: #bdc3c7; cursor: pointer; transition: all 0.2s ease; }
         .transaction-details { display: flex; align-items: center; gap: 1rem; }
         .transaction-icon { font-size: 1.5rem; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
         .transaction-icon.gasto { background-color: rgba(231, 76, 60, 0.1); color: var(--cor-alerta); }
@@ -87,17 +87,27 @@
         .keep-open-option input[type="checkbox"] { width: auto; cursor: pointer; }
         .form-actions-buttons { display: flex; gap: 1rem; }
         
-        /* Estilos para precificação avançada */
+        /* ALTERADO: Estilos Aprimorados para Precificação Avançada */
         .pricing-mode-selector { display: flex; border: 1px solid var(--cor-borda); border-radius: 8px; margin-bottom: 1.5rem; overflow: hidden; }
         .pricing-mode-btn { flex: 1; padding: 0.6rem; background-color: transparent; border: none; cursor: pointer; color: var(--cor-texto); font-weight: 500; transition: background-color 0.2s; }
         .pricing-mode-btn.active { background-color: var(--cor-secundaria); color: #fff; }
-        .component-list-header { display: grid; grid-template-columns: 3fr 1.5fr 1.5fr 40px; gap: 10px; font-weight: 500; font-size: 0.8rem; color: var(--cor-texto); opacity: 0.7; padding: 0 0.5rem 0.5rem 0.5rem; }
+        
+        .component-list-container { padding: 1rem; border: 1px solid var(--cor-borda); border-radius: var(--borda-radius); background-color: var(--cor-fundo); }
+        html.dark-mode .component-list-container { background-color: rgba(0,0,0,0.1); }
+
+        .component-list-header { display: grid; grid-template-columns: 3fr 1.5fr 1.5fr 40px; gap: 10px; font-weight: 500; font-size: 0.8rem; color: var(--cor-texto); opacity: 0.7; padding: 0 0.5rem; margin-bottom: 0.5rem; }
         .component-item { display: grid; grid-template-columns: 3fr 1.5fr 1.5fr 40px; gap: 10px; align-items: center; margin-bottom: 0.5rem; }
         .component-item input { padding: 0.5rem; }
-        .add-component-btn { display: block; width: 100%; padding: 0.6rem; margin: 1rem 0; background-color: var(--cor-fundo); border: 2px dashed var(--cor-borda); border-radius: 8px; font-weight: 600; color: var(--cor-secundaria); cursor: pointer; }
-        .total-fixed-cost { display: flex; justify-content: space-between; align-items: center; background-color: var(--cor-fundo); padding: 1rem; border-radius: 8px; margin-top: 1rem; }
+        .remove-component-btn { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; }
+        .remove-component-btn:hover { background-color: rgba(231, 76, 60, 0.1); color: var(--cor-alerta); transform: scale(1.1); }
+        
+        .add-component-btn { display: block; width: 100%; padding: 0.7rem; margin-top: 1rem; background-color: transparent; border: 1px solid var(--cor-secundaria); border-radius: 8px; font-weight: 500; color: var(--cor-secundaria); cursor: pointer; transition: var(--transicao-suave); }
+        .add-component-btn:hover { background-color: var(--cor-secundaria); color: #fff; }
+        
+        .total-fixed-cost { display: flex; justify-content: space-between; align-items: center; background-color: var(--cor-cartao); padding: 1rem; border-radius: 8px; margin-top: 1.5rem; border-top: 3px solid var(--cor-secundaria); }
         .total-fixed-cost label { font-weight: 600; }
         .total-fixed-cost span { font-size: 1.2rem; font-weight: 700; color: var(--cor-primaria); }
+
         .pricing-result { margin-top: 1.5rem; padding: 1.5rem; background-color: var(--cor-fundo); border-radius: var(--borda-radius); text-align: center; }
         .pricing-result p.result-title { margin: 0; font-size: 1rem; color: var(--cor-texto); font-weight: 500; }
         .pricing-result .price-value { font-size: 2.2rem; font-weight: 700; color: var(--cor-sucesso); margin: 0.5rem 0 1rem 0; }
@@ -156,7 +166,7 @@
         <div class="modal-content"><div class="modal-header"><h2>Definir Metas Mensais</h2><button class="close-modal" data-modal-id="goals-modal-overlay">×</button></div><form id="goals-form"><div class="form-group"><label for="goal-revenue">Meta de Receita (R$)</label><input type="number" id="goal-revenue" step="100"></div><div class="form-group"><label for="goal-expense">Limite de Despesas (R$)</label><input type="number" id="goal-expense" step="100"></div><div class="form-actions"><button type="button" class="form-btn cancel" data-modal-id="goals-modal-overlay">Cancelar</button><button type="submit" class="form-btn save">Salvar Metas</button></div></form></div>
     </div>
 
-    <!-- Modal de Precificação com Modo Avançado -->
+    <!-- ALTERADO: Estrutura HTML da Precificação Aprimorada -->
     <div class="modal-overlay" id="pricing-modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -178,14 +188,15 @@
                 </div>
 
                 <div id="pricing-advanced-view" class="hidden">
-                    <div class="component-list-header">
-                        <span>Componente / Ingrediente</span>
-                        <span>Qtde.</span>
-                        <span>Custo Unit.</span>
-                        <span></span>
+                    <div class="component-list-container">
+                        <div class="component-list-header">
+                            <span>Componente / Ingrediente</span>
+                            <span>Qtde.</span>
+                            <span>Custo Unit.</span>
+                        </div>
+                        <div id="component-list"></div>
+                        <button type="button" id="add-component-btn" class="add-component-btn">+ Adicionar Componente</button>
                     </div>
-                    <div id="component-list"></div>
-                    <button type="button" id="add-component-btn" class="add-component-btn">+ Adicionar Componente</button>
                     <div class="total-fixed-cost">
                         <label>Custo Fixo Total (calculado)</label>
                         <span id="total-calculated-cost">R$ 0,00</span>
@@ -301,7 +312,7 @@
                 <input type="text" placeholder="Nome do item" class="component-name">
                 <input type="number" value="1" step="any" min="0" class="component-qty">
                 <input type="number" placeholder="0.00" step="0.01" min="0" class="component-cost">
-                <button type="button" class="remove-component-btn">×</button>
+                <button type="button" class="remove-component-btn" title="Remover item">×</button>
             `;
             componentList.appendChild(item);
         },
