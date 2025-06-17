@@ -87,7 +87,7 @@
         .keep-open-option input[type="checkbox"] { width: auto; cursor: pointer; }
         .form-actions-buttons { display: flex; gap: 1rem; }
         
-        /* NOVO/ALTERADO: Estilos para precificação avançada */
+        /* Estilos para precificação avançada */
         .pricing-mode-selector { display: flex; border: 1px solid var(--cor-borda); border-radius: 8px; margin-bottom: 1.5rem; overflow: hidden; }
         .pricing-mode-btn { flex: 1; padding: 0.6rem; background-color: transparent; border: none; cursor: pointer; color: var(--cor-texto); font-weight: 500; transition: background-color 0.2s; }
         .pricing-mode-btn.active { background-color: var(--cor-secundaria); color: #fff; }
@@ -156,7 +156,7 @@
         <div class="modal-content"><div class="modal-header"><h2>Definir Metas Mensais</h2><button class="close-modal" data-modal-id="goals-modal-overlay">×</button></div><form id="goals-form"><div class="form-group"><label for="goal-revenue">Meta de Receita (R$)</label><input type="number" id="goal-revenue" step="100"></div><div class="form-group"><label for="goal-expense">Limite de Despesas (R$)</label><input type="number" id="goal-expense" step="100"></div><div class="form-actions"><button type="button" class="form-btn cancel" data-modal-id="goals-modal-overlay">Cancelar</button><button type="submit" class="form-btn save">Salvar Metas</button></div></form></div>
     </div>
 
-    <!-- NOVO/ALTERADO: Modal de Precificação com Modo Avançado -->
+    <!-- Modal de Precificação com Modo Avançado -->
     <div class="modal-overlay" id="pricing-modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -249,7 +249,7 @@
     let monthlyChart = null;
     let monthlyGoals = { revenue: 0, expense: 0 };
     let notificationState = { expenseGoalExceeded: false, revenueGoalNear: false };
-    let pricingMode = 'simple'; // NOVO: Estado para o modo da calculadora
+    let pricingMode = 'simple';
 
     // --- DOM ELEMENTS ---
     const pricingSimpleView = document.getElementById('pricing-simple-view');
@@ -258,11 +258,25 @@
 
     // --- CORE LOGIC OBJECT ---
     const App = {
-        // ... (funções existentes como updateUI, showToast, etc., permanecem iguais) ...
-        updateUI() { if (!currentUser) return; const monthlyTotals = this.calculateMonthlyTotals(); this.updateSummary(monthlyTotals); this.updateGoalsUI(monthlyTotals); this.renderOrUpdateChart(); this.renderTransactions(); },
-        showToast(message, type = 'success') { const toastContainer = document.getElementById('toast-container'); const toast = document.createElement('div'); toast.className = `toast ${type}`; const icons = { success: '✅', info: 'ℹ️', error: '❌' }; toast.innerHTML = `<span class="toast-icon">${icons[type]}</span> <p>${message}</p>`; toastContainer.appendChild(toast); setTimeout(() => toast.remove(), 3500); },
-        
-        // NOVO: Funções para o modo avançado de precificação
+        updateUI() {
+            if (!currentUser) return;
+            const monthlyTotals = this.calculateMonthlyTotals();
+            this.updateSummary(monthlyTotals);
+            this.updateGoalsUI(monthlyTotals);
+            this.renderOrUpdateChart();
+            this.renderTransactions();
+        },
+
+        showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icons = { success: '✅', info: 'ℹ️', error: '❌' };
+            toast.innerHTML = `<span class="toast-icon">${icons[type]}</span> <p>${message}</p>`;
+            toastContainer.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        },
+
         togglePricingMode(newMode) {
             pricingMode = newMode;
             document.getElementById('pricing-result-container').classList.add('hidden');
@@ -279,6 +293,7 @@
                 if (componentList.children.length === 0) this.addComponentRow();
             }
         },
+
         addComponentRow() {
             const item = document.createElement('div');
             item.className = 'component-item';
@@ -290,6 +305,7 @@
             `;
             componentList.appendChild(item);
         },
+
         updateTotalFixedCost() {
             let total = 0;
             const items = componentList.querySelectorAll('.component-item');
@@ -302,7 +318,6 @@
             return total;
         },
 
-        // ALTERADO: Função de cálculo de preço para considerar o modo
         calculatePrice(e) {
             e.preventDefault();
             const resultContainer = document.getElementById('pricing-result-container');
@@ -349,46 +364,206 @@
 
             resultContainer.classList.remove('hidden');
         },
+
+        saveGoals(e) {
+            e.preventDefault();
+            const revenueGoal = parseFloat(document.getElementById('goal-revenue').value) || 0;
+            const expenseGoal = parseFloat(document.getElementById('goal-expense').value) || 0;
+            const monthId = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+            const goalsDocRef = doc(db, 'users', currentUser.uid, 'goals', monthId);
+            setDoc(goalsDocRef, { revenue: revenueGoal, expense: expenseGoal }, { merge: true })
+                .then(() => {
+                    this.Modal.close('goals-modal-overlay');
+                    this.showToast('Metas salvas com sucesso!');
+                })
+                .catch(error => this.showToast('Erro ao salvar metas.', 'error'));
+        },
         
-        // ... (demais funções como saveGoals, addTransaction, etc., permanecem iguais) ...
-        saveGoals(e) { e.preventDefault(); const revenueGoal = parseFloat(document.getElementById('goal-revenue').value) || 0; const expenseGoal = parseFloat(document.getElementById('goal-expense').value) || 0; const monthId = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`; const goalsDocRef = doc(db, 'users', currentUser.uid, 'goals', monthId); setDoc(goalsDocRef, { revenue: revenueGoal, expense: expenseGoal }, { merge: true }).then(() => { this.Modal.close('goals-modal-overlay'); this.showToast('Metas salvas com sucesso!'); }).catch(error => this.showToast('Erro ao salvar metas.', 'error')); },
-        addTransaction(e) { e.preventDefault(); const newTransaction = { type: document.getElementById('transaction-type').value, description: document.getElementById('description').value, amount: parseFloat(document.getElementById('amount').value), date: document.getElementById('date').value || new Date().toISOString().slice(0, 10), category: document.getElementById('transaction-type').value === 'gasto' ? document.getElementById('category').value : null }; if (!newTransaction.description || isNaN(newTransaction.amount) || (newTransaction.type === 'gasto' && !newTransaction.category)) { return this.showToast("Preencha os campos obrigatórios.", "error"); } addDoc(collection(db, 'users', currentUser.uid, 'transactions'), newTransaction).then(() => { this.showToast('Transação adicionada com sucesso!'); const keepOpenCheckbox = document.getElementById('keep-modal-open'); if (keepOpenCheckbox.checked) { document.getElementById('description').value = ''; document.getElementById('amount').value = ''; document.getElementById('description').focus(); } else { this.Modal.close('transaction-modal-overlay'); } }).catch(error => this.showToast('Erro ao adicionar transação.', 'error')); },
-        removeTransaction(id) { if (confirm('Tem certeza que deseja excluir este lançamento?')) { deleteDoc(doc(db, 'users', currentUser.uid, 'transactions', id)).then(() => this.showToast('Lançamento excluído.', 'info')).catch(error => this.showToast('Erro ao excluir.', 'error')); } },
-        resetNotificationState() { notificationState = { expenseGoalExceeded: false, revenueGoalNear: false }; },
-        sendNotification(title, options = {}) { if (Notification.permission !== 'granted') return; new Notification(title, { icon: document.getElementById('favicon').href, ...options }); },
-        checkAndSendNotifications({ totalGanhos, totalGastos }) { const { revenue: revenueGoal, expense: expenseGoal } = monthlyGoals; if (expenseGoal > 0 && totalGastos >= expenseGoal && !notificationState.expenseGoalExceeded) { this.sendNotification("Alerta de Despesas!", { body: `Você ultrapassou seu limite de gastos de ${this.formatCurrency(expenseGoal)}!`, tag: 'expense-alert' }); notificationState.expenseGoalExceeded = true; } if (revenueGoal > 0 && totalGanhos < revenueGoal && !notificationState.revenueGoalNear && (totalGanhos / revenueGoal) >= 0.9) { const remaining = revenueGoal - totalGanhos; this.sendNotification("Meta de Receita Quase Lá!", { body: `Faltam apenas ${this.formatCurrency(remaining)} para atingir sua meta de ${this.formatCurrency(revenueGoal)}!`, tag: 'revenue-alert' }); notificationState.revenueGoalNear = true; } },
-        updateGoalsUI({ totalGanhos, totalGastos }) { const { revenue: revenueGoal, expense: expenseGoal } = monthlyGoals; document.getElementById('revenue-goal-text').textContent = `${this.formatCurrency(totalGanhos)} / ${this.formatCurrency(revenueGoal)}`; document.getElementById('expense-goal-text').textContent = `${this.formatCurrency(totalGastos)} / ${this.formatCurrency(expenseGoal)}`; const revenueBar = document.getElementById('revenue-progress-bar'); revenueBar.style.width = `${Math.min(revenueGoal > 0 ? (totalGanhos / revenueGoal) * 100 : 0, 100)}%`; const expenseBar = document.getElementById('expense-progress-bar'); const expenseProgress = expenseGoal > 0 ? (totalGastos / expenseGoal) * 100 : 0; expenseBar.style.width = `${Math.min(expenseProgress, 100)}%`; expenseBar.className = 'progress-bar'; if (expenseProgress >= 100) expenseBar.classList.add('danger'); else if (expenseProgress >= 90) expenseBar.classList.add('warning'); else expenseBar.classList.add('success'); this.checkAndSendNotifications({ totalGanhos, totalGastos }); },
-        calculateMonthlyTotals() { const now = new Date(); const currentYear = now.getFullYear(); const currentMonth = now.getMonth(); const monthlyTransactions = transactions.filter(t => { const transactionDate = new Date(t.date + 'T00:00:00'); return transactionDate.getFullYear() === currentYear && transactionDate.getMonth() === currentMonth; }); const totalGanhos = monthlyTransactions.filter(t => t.type === 'ganho').reduce((acc, t) => acc + t.amount, 0); const totalGastos = monthlyTransactions.filter(t => t.type === 'gasto').reduce((acc, t) => acc + t.amount, 0); return { totalGanhos, totalGastos }; },
-        updateSummary({ totalGanhos, totalGastos }) { const saldo = totalGanhos - totalGastos; document.getElementById('total-ganhos').textContent = this.formatCurrency(totalGanhos); document.getElementById('total-gastos').textContent = this.formatCurrency(totalGastos); document.getElementById('saldo-mes').textContent = this.formatCurrency(saldo); document.getElementById('saldo-mes').className = saldo >= 0 ? 'positive' : 'negative'; },
-        renderTransactions() { const list = document.getElementById('transaction-list'); list.innerHTML = ''; transactions.slice(0, 10).forEach(t => { const isGasto = t.type === 'gasto'; const item = document.createElement('li'); item.className = 'transaction-item'; item.dataset.id = t.id; item.innerHTML = `<div class="transaction-details"><div class="transaction-icon ${isGasto ? 'gasto' : 'ganho'}">${isGasto ? '🧾' : '💵'}</div><div><p class="description">${t.description}</p>${t.category ? `<span class="category-tag">${t.category}</span>` : ''}</div></div><div style="text-align:right;"><p class="transaction-amount ${isGasto ? 'negative' : 'positive'}">${this.formatCurrency(t.amount)}</p><button class="delete-btn" title="Excluir">🗑️</button></div>`; list.appendChild(item); }); },
-        processDataForChart() { const monthlyDataChart = {}; const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]; transactions.forEach(t => { const date = new Date(t.date + 'T00:00:00'); const yearMonth = `${date.getFullYear()}-${String(date.getMonth()).padStart(2, '0')}`; if (!monthlyDataChart[yearMonth]) monthlyDataChart[yearMonth] = { ganhos: 0, gastos: 0, label: `${monthNames[date.getMonth()]}/${date.getFullYear().toString().slice(-2)}` }; if (t.type === 'ganho') monthlyDataChart[yearMonth].ganhos += t.amount; else monthlyDataChart[yearMonth].gastos += t.amount; }); const sortedKeys = Object.keys(monthlyDataChart).sort(); return { labels: sortedKeys.map(key => monthlyDataChart[key].label), ganhosData: sortedKeys.map(key => monthlyDataChart[key].ganhos), gastosData: sortedKeys.map(key => monthlyDataChart[key].gastos) }; },
-        renderOrUpdateChart() { const { labels, ganhosData, gastosData } = this.processDataForChart(); const ctx = document.getElementById('monthly-chart').getContext('2d'); const isDarkMode = document.documentElement.classList.contains('dark-mode'); const style = getComputedStyle(document.documentElement); if (monthlyChart) monthlyChart.destroy(); monthlyChart = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: 'Receitas', data: ganhosData, borderColor: style.getPropertyValue('--cor-sucesso').trim(), backgroundColor: 'rgba(46, 204, 113, 0.1)', fill: true, tension: 0.3 }, { label: 'Despesas', data: gastosData, borderColor: style.getPropertyValue('--cor-alerta').trim(), backgroundColor: 'rgba(231, 76, 60, 0.1)', fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { color: isDarkMode ? '#bdc3c7' : '#34495e' }, grid: { color: style.getPropertyValue('--cor-borda').trim() } }, x: { ticks: { color: isDarkMode ? '#bdc3c7' : '#34495e' }, grid: { color: 'transparent' } } }, plugins: { legend: { labels: { color: isDarkMode ? '#e5e9f0' : '#2c3e50' } }, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${this.formatCurrency(c.parsed.y)}` } } } } }); },
+        addTransaction(e) {
+            e.preventDefault();
+            const newTransaction = {
+                type: document.getElementById('transaction-type').value,
+                description: document.getElementById('description').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                date: document.getElementById('date').value || new Date().toISOString().slice(0, 10),
+                category: document.getElementById('transaction-type').value === 'gasto' ? document.getElementById('category').value : null
+            };
+            if (!newTransaction.description || isNaN(newTransaction.amount) || (newTransaction.type === 'gasto' && !newTransaction.category)) {
+                return this.showToast("Preencha os campos obrigatórios.", "error");
+            }
+
+            addDoc(collection(db, 'users', currentUser.uid, 'transactions'), newTransaction)
+                .then(() => {
+                    this.showToast('Transação adicionada com sucesso!');
+                    const keepOpenCheckbox = document.getElementById('keep-modal-open');
+                    
+                    if (keepOpenCheckbox.checked) {
+                        document.getElementById('description').value = '';
+                        document.getElementById('amount').value = '';
+                        document.getElementById('description').focus();
+                    } else {
+                        this.Modal.close('transaction-modal-overlay');
+                    }
+                })
+                .catch(error => this.showToast('Erro ao adicionar transação.', 'error'));
+        },
+
+        removeTransaction(id) {
+            if (confirm('Tem certeza que deseja excluir este lançamento?')) {
+                deleteDoc(doc(db, 'users', currentUser.uid, 'transactions', id))
+                    .then(() => this.showToast('Lançamento excluído.', 'info'))
+                    .catch(error => this.showToast('Erro ao excluir.', 'error'));
+            }
+        },
+
+        resetNotificationState() {
+            notificationState = { expenseGoalExceeded: false, revenueGoalNear: false };
+        },
+
+        sendNotification(title, options = {}) {
+            if (Notification.permission !== 'granted') return;
+            new Notification(title, { icon: document.getElementById('favicon').href, ...options });
+        },
+
+        checkAndSendNotifications({ totalGanhos, totalGastos }) {
+            const { revenue: revenueGoal, expense: expenseGoal } = monthlyGoals;
+            if (expenseGoal > 0 && totalGastos >= expenseGoal && !notificationState.expenseGoalExceeded) {
+                this.sendNotification("Alerta de Despesas!", { body: `Você ultrapassou seu limite de gastos de ${this.formatCurrency(expenseGoal)}!`, tag: 'expense-alert' });
+                notificationState.expenseGoalExceeded = true;
+            }
+            if (revenueGoal > 0 && totalGanhos < revenueGoal && !notificationState.revenueGoalNear && (totalGanhos / revenueGoal) >= 0.9) {
+                const remaining = revenueGoal - totalGanhos;
+                this.sendNotification("Meta de Receita Quase Lá!", { body: `Faltam apenas ${this.formatCurrency(remaining)} para atingir sua meta de ${this.formatCurrency(revenueGoal)}!`, tag: 'revenue-alert' });
+                notificationState.revenueGoalNear = true;
+            }
+        },
+
+        updateGoalsUI({ totalGanhos, totalGastos }) {
+            const { revenue: revenueGoal, expense: expenseGoal } = monthlyGoals;
+            document.getElementById('revenue-goal-text').textContent = `${this.formatCurrency(totalGanhos)} / ${this.formatCurrency(revenueGoal)}`;
+            document.getElementById('expense-goal-text').textContent = `${this.formatCurrency(totalGastos)} / ${this.formatCurrency(expenseGoal)}`;
+            const revenueBar = document.getElementById('revenue-progress-bar');
+            revenueBar.style.width = `${Math.min(revenueGoal > 0 ? (totalGanhos / revenueGoal) * 100 : 0, 100)}%`;
+            const expenseBar = document.getElementById('expense-progress-bar');
+            const expenseProgress = expenseGoal > 0 ? (totalGastos / expenseGoal) * 100 : 0;
+            expenseBar.style.width = `${Math.min(expenseProgress, 100)}%`;
+            expenseBar.className = 'progress-bar';
+            if (expenseProgress >= 100) expenseBar.classList.add('danger');
+            else if (expenseProgress >= 90) expenseBar.classList.add('warning');
+            else expenseBar.classList.add('success');
+            this.checkAndSendNotifications({ totalGanhos, totalGastos });
+        },
+
+        calculateMonthlyTotals() {
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth();
+            const monthlyTransactions = transactions.filter(t => {
+                const transactionDate = new Date(t.date + 'T00:00:00');
+                return transactionDate.getFullYear() === currentYear && transactionDate.getMonth() === currentMonth;
+            });
+            const totalGanhos = monthlyTransactions.filter(t => t.type === 'ganho').reduce((acc, t) => acc + t.amount, 0);
+            const totalGastos = monthlyTransactions.filter(t => t.type === 'gasto').reduce((acc, t) => acc + t.amount, 0);
+            return { totalGanhos, totalGastos };
+        },
+        
+        updateSummary({ totalGanhos, totalGastos }) {
+            const saldo = totalGanhos - totalGastos;
+            document.getElementById('total-ganhos').textContent = this.formatCurrency(totalGanhos);
+            document.getElementById('total-gastos').textContent = this.formatCurrency(totalGastos);
+            document.getElementById('saldo-mes').textContent = this.formatCurrency(saldo);
+            document.getElementById('saldo-mes').className = saldo >= 0 ? 'positive' : 'negative';
+        },
+
+        renderTransactions() {
+            const list = document.getElementById('transaction-list');
+            list.innerHTML = '';
+            transactions.slice(0, 10).forEach(t => {
+                const isGasto = t.type === 'gasto';
+                const item = document.createElement('li');
+                item.className = 'transaction-item';
+                item.dataset.id = t.id;
+                item.innerHTML = `<div class="transaction-details"><div class="transaction-icon ${isGasto ? 'gasto' : 'ganho'}">${isGasto ? '🧾' : '💵'}</div><div><p class="description">${t.description}</p>${t.category ? `<span class="category-tag">${t.category}</span>` : ''}</div></div><div style="text-align:right;"><p class="transaction-amount ${isGasto ? 'negative' : 'positive'}">${this.formatCurrency(t.amount)}</p><button class="delete-btn" title="Excluir">🗑️</button></div>`;
+                list.appendChild(item);
+            });
+        },
+        
+        processDataForChart() {
+            const monthlyDataChart = {};
+            const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+            transactions.forEach(t => {
+                const date = new Date(t.date + 'T00:00:00');
+                const yearMonth = `${date.getFullYear()}-${String(date.getMonth()).padStart(2, '0')}`;
+                if (!monthlyDataChart[yearMonth]) monthlyDataChart[yearMonth] = { ganhos: 0, gastos: 0, label: `${monthNames[date.getMonth()]}/${date.getFullYear().toString().slice(-2)}` };
+                if (t.type === 'ganho') monthlyDataChart[yearMonth].ganhos += t.amount; else monthlyDataChart[yearMonth].gastos += t.amount;
+            });
+            const sortedKeys = Object.keys(monthlyDataChart).sort();
+            return {
+                labels: sortedKeys.map(key => monthlyDataChart[key].label),
+                ganhosData: sortedKeys.map(key => monthlyDataChart[key].ganhos),
+                gastosData: sortedKeys.map(key => monthlyDataChart[key].gastos)
+            };
+        },
+
+        renderOrUpdateChart() {
+            const { labels, ganhosData, gastosData } = this.processDataForChart();
+            const ctx = document.getElementById('monthly-chart').getContext('2d');
+            const isDarkMode = document.documentElement.classList.contains('dark-mode');
+            const style = getComputedStyle(document.documentElement);
+            if (monthlyChart) monthlyChart.destroy();
+            monthlyChart = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: 'Receitas', data: ganhosData, borderColor: style.getPropertyValue('--cor-sucesso').trim(), backgroundColor: 'rgba(46, 204, 113, 0.1)', fill: true, tension: 0.3 }, { label: 'Despesas', data: gastosData, borderColor: style.getPropertyValue('--cor-alerta').trim(), backgroundColor: 'rgba(231, 76, 60, 0.1)', fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { color: isDarkMode ? '#bdc3c7' : '#34495e' }, grid: { color: style.getPropertyValue('--cor-borda').trim() } }, x: { ticks: { color: isDarkMode ? '#bdc3c7' : '#34495e' }, grid: { color: 'transparent' } } }, plugins: { legend: { labels: { color: isDarkMode ? '#e5e9f0' : '#2c3e50' } }, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${this.formatCurrency(c.parsed.y)}` } } } } });
+        },
+
         Modal: {
             open(modalId, type) {
                 const modal = document.getElementById(modalId);
                 if (modalId === 'pricing-modal-overlay') {
-                    App.togglePricingMode('simple'); // Reseta para o modo simples ao abrir
+                    App.togglePricingMode('simple');
                     document.getElementById('pricing-result-container').classList.add('hidden');
                 }
-                if (modalId === 'transaction-modal-overlay') { modal.querySelector('#modal-title').textContent = type === 'ganho' ? 'Adicionar Receita' : 'Adicionar Despesa'; modal.querySelector('#transaction-type').value = type; modal.querySelector('#category').parentElement.style.display = type === 'gasto' ? 'block' : 'none'; modal.querySelector('#category').required = type === 'gasto'; } 
-                else if (modalId === 'goals-modal-overlay') { modal.querySelector('#goal-revenue').value = monthlyGoals.revenue || ''; modal.querySelector('#goal-expense').value = monthlyGoals.expense || ''; }
+                if (modalId === 'transaction-modal-overlay') {
+                    modal.querySelector('#modal-title').textContent = type === 'ganho' ? 'Adicionar Receita' : 'Adicionar Despesa';
+                    modal.querySelector('#transaction-type').value = type;
+                    modal.querySelector('#category').parentElement.style.display = type === 'gasto' ? 'block' : 'none';
+                    modal.querySelector('#category').required = type === 'gasto';
+                } else if (modalId === 'goals-modal-overlay') {
+                    modal.querySelector('#goal-revenue').value = monthlyGoals.revenue || '';
+                    modal.querySelector('#goal-expense').value = monthlyGoals.expense || '';
+                }
                 modal.classList.add('active');
             },
             close(modalId) {
                 const modal = document.getElementById(modalId);
-                if(modal) { modal.classList.remove('active'); const form = modal.querySelector('form'); if(form) form.reset(); }
+                if(modal) {
+                    modal.classList.remove('active');
+                    const form = modal.querySelector('form');
+                    if(form) form.reset();
+                }
             }
         },
-        handleListClick(e) { if (e.target.classList.contains('delete-btn')) { this.removeTransaction(e.target.closest('.transaction-item').dataset.id); } },
+
+        handleListClick(e) {
+            if (e.target.classList.contains('delete-btn')) {
+                this.removeTransaction(e.target.closest('.transaction-item').dataset.id);
+            }
+        },
+
         formatCurrency: (value) => (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
     };
     
     // --- EVENT LISTENERS SETUP ---
-    themeToggleBtn.addEventListener('click', () => { document.documentElement.classList.toggle('dark-mode'); const isDarkMode = document.documentElement.classList.contains('dark-mode'); localStorage.setItem('theme', isDarkMode ? 'dark' : 'light'); themeToggleBtn.textContent = isDarkMode ? '☀️' : '🌙'; if (monthlyChart) App.renderOrUpdateChart(); });
+    const themeToggleBtn = document.getElementById('theme-toggle-btn');
+    themeToggleBtn.addEventListener('click', () => {
+        document.documentElement.classList.toggle('dark-mode');
+        const isDarkMode = document.documentElement.classList.contains('dark-mode');
+        localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+        themeToggleBtn.textContent = isDarkMode ? '☀️' : '🌙';
+        if (monthlyChart) App.renderOrUpdateChart();
+    });
+
     document.getElementById('logout-btn').addEventListener('click', (e) => { e.preventDefault(); signOut(auth); });
     document.querySelectorAll('.close-modal, .form-btn.cancel').forEach(btn => btn.addEventListener('click', () => App.Modal.close(btn.dataset.modalId)));
     
-    // Listeners de transações e metas
     document.getElementById('add-gasto-btn').addEventListener('click', () => App.Modal.open('transaction-modal-overlay', 'gasto'));
     document.getElementById('add-ganho-btn').addEventListener('click', () => App.Modal.open('transaction-modal-overlay', 'ganho'));
     document.getElementById('set-goals-btn').addEventListener('click', () => App.Modal.open('goals-modal-overlay'));
@@ -396,7 +571,6 @@
     document.getElementById('goals-form').addEventListener('submit', (e) => App.saveGoals(e));
     document.getElementById('transaction-list').addEventListener('click', (e) => App.handleListClick(e));
     
-    // NOVO: Listeners para precificação avançada
     document.getElementById('pricing-btn').addEventListener('click', () => App.Modal.open('pricing-modal-overlay'));
     document.getElementById('pricing-form').addEventListener('submit', (e) => App.calculatePrice(e));
     document.getElementById('pricing-mode-simple').addEventListener('click', () => App.togglePricingMode('simple'));
@@ -414,9 +588,34 @@
         }
     });
     
-    onAuthStateChanged(auth, (user) => { if (user) { currentUser = user; document.getElementById('user-email').textContent = user.email; loadTransactions(user.uid); loadMonthlyGoals(user.uid); } else { window.location.href = 'index.html'; } });
-    function loadTransactions(userId) { const q = query(collection(db, 'users', userId, 'transactions'), orderBy('date', 'desc')); onSnapshot(q, (snapshot) => { transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); App.updateUI(); }); }
-    function loadMonthlyGoals(userId) { const monthId = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`; const goalsDocRef = doc(db, 'users', userId, 'goals', monthId); onSnapshot(goalsDocRef, (docSnap) => { App.resetNotificationState(); monthlyGoals = docSnap.exists() ? docSnap.data() : { revenue: 0, expense: 0 }; App.updateUI(); }); }
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+            document.getElementById('user-email').textContent = user.email;
+            loadTransactions(user.uid);
+            loadMonthlyGoals(user.uid);
+        } else {
+            window.location.href = 'index.html';
+        }
+    });
+
+    function loadTransactions(userId) {
+        const q = query(collection(db, 'users', userId, 'transactions'), orderBy('date', 'desc'));
+        onSnapshot(q, (snapshot) => {
+            transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            App.updateUI();
+        });
+    }
+
+    function loadMonthlyGoals(userId) {
+        const monthId = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+        const goalsDocRef = doc(db, 'users', userId, 'goals', monthId);
+        onSnapshot(goalsDocRef, (docSnap) => {
+            App.resetNotificationState();
+            monthlyGoals = docSnap.exists() ? docSnap.data() : { revenue: 0, expense: 0 };
+            App.updateUI();
+        });
+    }
   });
 </script>
 </body>
