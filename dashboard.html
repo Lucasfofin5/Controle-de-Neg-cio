@@ -65,7 +65,7 @@
         .hidden { display: none !important; }
         .chart-container { position: relative; height: 350px; width: 100%; }
         .transaction-list { list-style: none; } .transaction-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--cor-borda); }
-        .delete-btn { background: none; border: none; font-size: 1.2rem; color: #bdc3c7; cursor: pointer; transition: color 0.2s, transform 0.2s; }
+        .delete-btn, .remove-component-btn { background: none; border: none; font-size: 1.2rem; color: #bdc3c7; cursor: pointer; transition: color 0.2s, transform 0.2s; }
         .transaction-details { display: flex; align-items: center; gap: 1rem; }
         .transaction-icon { font-size: 1.5rem; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
         .transaction-icon.gasto { background-color: rgba(231, 76, 60, 0.1); color: var(--cor-alerta); }
@@ -87,8 +87,17 @@
         .keep-open-option input[type="checkbox"] { width: auto; cursor: pointer; }
         .form-actions-buttons { display: flex; gap: 1rem; }
         
-        /* ALTERADO: Estilos aprimorados para a calculadora de precificação */
-        .modal-description { font-size: 0.9rem; color: var(--cor-texto); opacity: 0.8; margin-top: -1rem; margin-bottom: 1rem; }
+        /* NOVO/ALTERADO: Estilos para precificação avançada */
+        .pricing-mode-selector { display: flex; border: 1px solid var(--cor-borda); border-radius: 8px; margin-bottom: 1.5rem; overflow: hidden; }
+        .pricing-mode-btn { flex: 1; padding: 0.6rem; background-color: transparent; border: none; cursor: pointer; color: var(--cor-texto); font-weight: 500; transition: background-color 0.2s; }
+        .pricing-mode-btn.active { background-color: var(--cor-secundaria); color: #fff; }
+        .component-list-header { display: grid; grid-template-columns: 3fr 1.5fr 1.5fr 40px; gap: 10px; font-weight: 500; font-size: 0.8rem; color: var(--cor-texto); opacity: 0.7; padding: 0 0.5rem 0.5rem 0.5rem; }
+        .component-item { display: grid; grid-template-columns: 3fr 1.5fr 1.5fr 40px; gap: 10px; align-items: center; margin-bottom: 0.5rem; }
+        .component-item input { padding: 0.5rem; }
+        .add-component-btn { display: block; width: 100%; padding: 0.6rem; margin: 1rem 0; background-color: var(--cor-fundo); border: 2px dashed var(--cor-borda); border-radius: 8px; font-weight: 600; color: var(--cor-secundaria); cursor: pointer; }
+        .total-fixed-cost { display: flex; justify-content: space-between; align-items: center; background-color: var(--cor-fundo); padding: 1rem; border-radius: 8px; margin-top: 1rem; }
+        .total-fixed-cost label { font-weight: 600; }
+        .total-fixed-cost span { font-size: 1.2rem; font-weight: 700; color: var(--cor-primaria); }
         .pricing-result { margin-top: 1.5rem; padding: 1.5rem; background-color: var(--cor-fundo); border-radius: var(--borda-radius); text-align: center; }
         .pricing-result p.result-title { margin: 0; font-size: 1rem; color: var(--cor-texto); font-weight: 500; }
         .pricing-result .price-value { font-size: 2.2rem; font-weight: 700; color: var(--cor-sucesso); margin: 0.5rem 0 1rem 0; }
@@ -99,13 +108,8 @@
         .breakdown-item .value { font-weight: 600; color: var(--cor-primaria); }
         .breakdown-item .value.profit { color: var(--cor-sucesso); }
         .breakdown-item .value.cost { color: var(--cor-alerta); }
-
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
         .toast { display: flex; align-items: center; background-color: var(--cor-cartao); color: var(--cor-texto); padding: 12px 20px; border-radius: var(--borda-radius); box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-left: 5px solid; min-width: 280px; opacity: 0; transform: translateX(100%); animation: toastIn 0.5s forwards, toastOut 0.5s 3s forwards; }
-        .toast-icon { font-size: 1.5rem; margin-right: 15px; }
-        .toast.success { border-color: var(--cor-sucesso); } .toast.success .toast-icon { color: var(--cor-sucesso); }
-        .toast.info { border-color: var(--cor-secundaria); } .toast.info .toast-icon { color: var(--cor-secundaria); }
-        .toast.error { border-color: var(--cor-alerta); } .toast.error .toast-icon { color: var(--cor-alerta); }
         @keyframes toastIn { to { opacity: 1; transform: translateX(0); } }
         @keyframes toastOut { to { opacity: 0; transform: translateX(100%); } }
         @media (max-width: 600px) { .chart-container { height: 250px; } .actions { grid-template-columns: 1fr; } }
@@ -152,19 +156,44 @@
         <div class="modal-content"><div class="modal-header"><h2>Definir Metas Mensais</h2><button class="close-modal" data-modal-id="goals-modal-overlay">×</button></div><form id="goals-form"><div class="form-group"><label for="goal-revenue">Meta de Receita (R$)</label><input type="number" id="goal-revenue" step="100"></div><div class="form-group"><label for="goal-expense">Limite de Despesas (R$)</label><input type="number" id="goal-expense" step="100"></div><div class="form-actions"><button type="button" class="form-btn cancel" data-modal-id="goals-modal-overlay">Cancelar</button><button type="submit" class="form-btn save">Salvar Metas</button></div></form></div>
     </div>
 
-    <!-- ALTERADO: Modal da Calculadora de Precificação Aprimorado -->
+    <!-- NOVO/ALTERADO: Modal de Precificação com Modo Avançado -->
     <div class="modal-overlay" id="pricing-modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Calculadora de Preço de Venda</h2>
                 <button class="close-modal" data-modal-id="pricing-modal-overlay">×</button>
             </div>
-            <p class="modal-description">Calcule o preço de venda ideal para seu produto com base nos seus custos e na margem de lucro desejada.</p>
+            
+            <div class="pricing-mode-selector">
+                <button class="pricing-mode-btn active" id="pricing-mode-simple">Simples</button>
+                <button class="pricing-mode-btn" id="pricing-mode-advanced">Avançado</button>
+            </div>
+
             <form id="pricing-form">
-                <div class="form-group">
-                    <label for="fixed-cost">Custo Fixo do Produto (R$)</label>
-                    <input type="number" id="fixed-cost" step="0.01" placeholder="Ex: 50.00" required>
+                <div id="pricing-simple-view">
+                    <div class="form-group">
+                        <label for="fixed-cost">Custo Fixo do Produto (R$)</label>
+                        <input type="number" id="fixed-cost" step="0.01" placeholder="Custo total para produzir/comprar" required>
+                    </div>
                 </div>
+
+                <div id="pricing-advanced-view" class="hidden">
+                    <div class="component-list-header">
+                        <span>Componente / Ingrediente</span>
+                        <span>Qtde.</span>
+                        <span>Custo Unit.</span>
+                        <span></span>
+                    </div>
+                    <div id="component-list"></div>
+                    <button type="button" id="add-component-btn" class="add-component-btn">+ Adicionar Componente</button>
+                    <div class="total-fixed-cost">
+                        <label>Custo Fixo Total (calculado)</label>
+                        <span id="total-calculated-cost">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <hr style="border: none; border-top: 1px solid var(--cor-borda); margin: 1.5rem 0;">
+
                 <div class="form-group">
                     <label for="variable-costs">Custos Variáveis (Impostos, Comissões, etc.) (%)</label>
                     <input type="number" id="variable-costs" step="0.1" placeholder="Ex: 15" required>
@@ -181,26 +210,11 @@
                 <p class="result-title">Preço de Venda Sugerido</p>
                 <div id="suggested-price" class="price-value">R$ 0,00</div>
                 <ul class="price-breakdown">
-                    <li class="breakdown-item">
-                        <span class="label">Custo Fixo do Produto</span>
-                        <span id="breakdown-fixed-cost" class="value cost">R$ 0,00</span>
-                    </li>
-                    <li class="breakdown-item">
-                        <span class="label">Custos Variáveis</span>
-                        <span id="breakdown-variable-cost" class="value cost">R$ 0,00</span>
-                    </li>
-                    <li class="breakdown-item">
-                        <span class="label">Lucro Bruto por Venda</span>
-                        <span id="breakdown-profit" class="value profit">R$ 0,00</span>
-                    </li>
-                    <li class="breakdown-item">
-                        <span class="label">Markup sobre o Custo</span>
-                        <span id="breakdown-markup" class="value">0,00%</span>
-                    </li>
-                    <li class="breakdown-item">
-                        <span class="label">Lucratividade sobre a Venda</span>
-                        <span id="breakdown-profitability" class="value">0,00%</span>
-                    </li>
+                    <li class="breakdown-item"><span class="label">Custo Fixo do Produto</span><span id="breakdown-fixed-cost" class="value cost">R$ 0,00</span></li>
+                    <li class="breakdown-item"><span class="label">Custos Variáveis</span><span id="breakdown-variable-cost" class="value cost">R$ 0,00</span></li>
+                    <li class="breakdown-item"><span class="label">Lucro Bruto por Venda</span><span id="breakdown-profit" class="value profit">R$ 0,00</span></li>
+                    <li class="breakdown-item"><span class="label">Markup sobre o Custo</span><span id="breakdown-markup" class="value">0,00%</span></li>
+                    <li class="breakdown-item"><span class="label">Lucratividade sobre a Venda</span><span id="breakdown-profitability" class="value">0,00%</span></li>
                 </ul>
             </div>
         </div>
@@ -235,37 +249,71 @@
     let monthlyChart = null;
     let monthlyGoals = { revenue: 0, expense: 0 };
     let notificationState = { expenseGoalExceeded: false, revenueGoalNear: false };
+    let pricingMode = 'simple'; // NOVO: Estado para o modo da calculadora
 
     // --- DOM ELEMENTS ---
-    const notificationPermissionLink = document.getElementById('notification-permission-link');
-    const themeToggleBtn = document.getElementById('theme-toggle-btn');
-    
+    const pricingSimpleView = document.getElementById('pricing-simple-view');
+    const pricingAdvancedView = document.getElementById('pricing-advanced-view');
+    const componentList = document.getElementById('component-list');
+
     // --- CORE LOGIC OBJECT ---
     const App = {
-        updateUI() {
-            if (!currentUser) return;
-            const monthlyTotals = this.calculateMonthlyTotals();
-            this.updateSummary(monthlyTotals);
-            this.updateGoalsUI(monthlyTotals);
-            this.renderOrUpdateChart();
-            this.renderTransactions();
+        // ... (funções existentes como updateUI, showToast, etc., permanecem iguais) ...
+        updateUI() { if (!currentUser) return; const monthlyTotals = this.calculateMonthlyTotals(); this.updateSummary(monthlyTotals); this.updateGoalsUI(monthlyTotals); this.renderOrUpdateChart(); this.renderTransactions(); },
+        showToast(message, type = 'success') { const toastContainer = document.getElementById('toast-container'); const toast = document.createElement('div'); toast.className = `toast ${type}`; const icons = { success: '✅', info: 'ℹ️', error: '❌' }; toast.innerHTML = `<span class="toast-icon">${icons[type]}</span> <p>${message}</p>`; toastContainer.appendChild(toast); setTimeout(() => toast.remove(), 3500); },
+        
+        // NOVO: Funções para o modo avançado de precificação
+        togglePricingMode(newMode) {
+            pricingMode = newMode;
+            document.getElementById('pricing-result-container').classList.add('hidden');
+            if (newMode === 'simple') {
+                pricingSimpleView.classList.remove('hidden');
+                pricingAdvancedView.classList.add('hidden');
+                document.getElementById('pricing-mode-simple').classList.add('active');
+                document.getElementById('pricing-mode-advanced').classList.remove('active');
+            } else {
+                pricingSimpleView.classList.add('hidden');
+                pricingAdvancedView.classList.remove('hidden');
+                document.getElementById('pricing-mode-simple').classList.remove('active');
+                document.getElementById('pricing-mode-advanced').classList.add('active');
+                if (componentList.children.length === 0) this.addComponentRow();
+            }
+        },
+        addComponentRow() {
+            const item = document.createElement('div');
+            item.className = 'component-item';
+            item.innerHTML = `
+                <input type="text" placeholder="Nome do item" class="component-name">
+                <input type="number" value="1" step="any" min="0" class="component-qty">
+                <input type="number" placeholder="0.00" step="0.01" min="0" class="component-cost">
+                <button type="button" class="remove-component-btn">×</button>
+            `;
+            componentList.appendChild(item);
+        },
+        updateTotalFixedCost() {
+            let total = 0;
+            const items = componentList.querySelectorAll('.component-item');
+            items.forEach(item => {
+                const qty = parseFloat(item.querySelector('.component-qty').value) || 0;
+                const cost = parseFloat(item.querySelector('.component-cost').value) || 0;
+                total += qty * cost;
+            });
+            document.getElementById('total-calculated-cost').textContent = this.formatCurrency(total);
+            return total;
         },
 
-        showToast(message, type = 'success') {
-            const toastContainer = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            const icons = { success: '✅', info: 'ℹ️', error: '❌' };
-            toast.innerHTML = `<span class="toast-icon">${icons[type]}</span> <p>${message}</p>`;
-            toastContainer.appendChild(toast);
-            setTimeout(() => toast.remove(), 3500);
-        },
-        
-        // ALTERADO: Função de cálculo de preço aprimorada
+        // ALTERADO: Função de cálculo de preço para considerar o modo
         calculatePrice(e) {
             e.preventDefault();
             const resultContainer = document.getElementById('pricing-result-container');
-            const fixedCost = parseFloat(document.getElementById('fixed-cost').value) || 0;
+            
+            let fixedCost = 0;
+            if (pricingMode === 'simple') {
+                fixedCost = parseFloat(document.getElementById('fixed-cost').value) || 0;
+            } else {
+                fixedCost = this.updateTotalFixedCost();
+            }
+
             const variableCostsPercent = (parseFloat(document.getElementById('variable-costs').value) || 0) / 100;
             const profitMarginPercent = (parseFloat(document.getElementById('profit-margin').value) || 0) / 100;
 
@@ -274,7 +322,6 @@
                 resultContainer.classList.add('hidden');
                 return;
             }
-
             const totalPercent = variableCostsPercent + profitMarginPercent;
             if (totalPercent >= 1) {
                 this.showToast('A soma dos custos variáveis e da margem de lucro não pode ser 100% ou mais.', 'error');
@@ -282,21 +329,17 @@
                 return;
             }
 
-            // 1. Calcula o preço de venda
             const sellingPrice = fixedCost / (1 - totalPercent);
-
             if (isNaN(sellingPrice) || sellingPrice <= 0) {
                 this.showToast('Não foi possível calcular o preço com os valores fornecidos.', 'error');
                 resultContainer.classList.add('hidden');
                 return;
             }
 
-            // 2. Calcula os valores para o resumo detalhado
             const variableCostValue = sellingPrice * variableCostsPercent;
             const grossProfitValue = sellingPrice * profitMarginPercent;
             const markup = fixedCost > 0 ? ((sellingPrice - fixedCost) / fixedCost) * 100 : 0;
             
-            // 3. Atualiza a UI com todos os detalhes
             document.getElementById('suggested-price').textContent = this.formatCurrency(sellingPrice);
             document.getElementById('breakdown-fixed-cost').textContent = this.formatCurrency(fixedCost);
             document.getElementById('breakdown-variable-cost').textContent = this.formatCurrency(variableCostValue);
@@ -306,249 +349,74 @@
 
             resultContainer.classList.remove('hidden');
         },
-
-        saveGoals(e) {
-            e.preventDefault();
-            const revenueGoal = parseFloat(document.getElementById('goal-revenue').value) || 0;
-            const expenseGoal = parseFloat(document.getElementById('goal-expense').value) || 0;
-            const monthId = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
-            const goalsDocRef = doc(db, 'users', currentUser.uid, 'goals', monthId);
-            setDoc(goalsDocRef, { revenue: revenueGoal, expense: expenseGoal }, { merge: true })
-                .then(() => {
-                    this.Modal.close('goals-modal-overlay');
-                    this.showToast('Metas salvas com sucesso!');
-                })
-                .catch(error => this.showToast('Erro ao salvar metas.', 'error'));
-        },
         
-        addTransaction(e) {
-            e.preventDefault();
-            const newTransaction = {
-                type: document.getElementById('transaction-type').value,
-                description: document.getElementById('description').value,
-                amount: parseFloat(document.getElementById('amount').value),
-                date: document.getElementById('date').value || new Date().toISOString().slice(0, 10),
-                category: document.getElementById('transaction-type').value === 'gasto' ? document.getElementById('category').value : null
-            };
-            if (!newTransaction.description || isNaN(newTransaction.amount) || (newTransaction.type === 'gasto' && !newTransaction.category)) {
-                return this.showToast("Preencha os campos obrigatórios.", "error");
-            }
-
-            addDoc(collection(db, 'users', currentUser.uid, 'transactions'), newTransaction)
-                .then(() => {
-                    this.showToast('Transação adicionada com sucesso!');
-                    const keepOpenCheckbox = document.getElementById('keep-modal-open');
-                    
-                    if (keepOpenCheckbox.checked) {
-                        document.getElementById('description').value = '';
-                        document.getElementById('amount').value = '';
-                        document.getElementById('description').focus();
-                    } else {
-                        this.Modal.close('transaction-modal-overlay');
-                    }
-                })
-                .catch(error => this.showToast('Erro ao adicionar transação.', 'error'));
-        },
-
-        removeTransaction(id) {
-            if (confirm('Tem certeza que deseja excluir este lançamento?')) {
-                deleteDoc(doc(db, 'users', currentUser.uid, 'transactions', id))
-                    .then(() => this.showToast('Lançamento excluído.', 'info'))
-                    .catch(error => this.showToast('Erro ao excluir.', 'error'));
-            }
-        },
-
-        resetNotificationState() {
-            notificationState = { expenseGoalExceeded: false, revenueGoalNear: false };
-        },
-
-        sendNotification(title, options = {}) {
-            if (Notification.permission !== 'granted') return;
-            new Notification(title, { icon: document.getElementById('favicon').href, ...options });
-        },
-
-        checkAndSendNotifications({ totalGanhos, totalGastos }) {
-            const { revenue: revenueGoal, expense: expenseGoal } = monthlyGoals;
-            if (expenseGoal > 0 && totalGastos >= expenseGoal && !notificationState.expenseGoalExceeded) {
-                this.sendNotification("Alerta de Despesas!", { body: `Você ultrapassou seu limite de gastos de ${this.formatCurrency(expenseGoal)}!`, tag: 'expense-alert' });
-                notificationState.expenseGoalExceeded = true;
-            }
-            if (revenueGoal > 0 && totalGanhos < revenueGoal && !notificationState.revenueGoalNear && (totalGanhos / revenueGoal) >= 0.9) {
-                const remaining = revenueGoal - totalGanhos;
-                this.sendNotification("Meta de Receita Quase Lá!", { body: `Faltam apenas ${this.formatCurrency(remaining)} para atingir sua meta de ${this.formatCurrency(revenueGoal)}!`, tag: 'revenue-alert' });
-                notificationState.revenueGoalNear = true;
-            }
-        },
-
-        updateGoalsUI({ totalGanhos, totalGastos }) {
-            const { revenue: revenueGoal, expense: expenseGoal } = monthlyGoals;
-            document.getElementById('revenue-goal-text').textContent = `${this.formatCurrency(totalGanhos)} / ${this.formatCurrency(revenueGoal)}`;
-            document.getElementById('expense-goal-text').textContent = `${this.formatCurrency(totalGastos)} / ${this.formatCurrency(expenseGoal)}`;
-            const revenueBar = document.getElementById('revenue-progress-bar');
-            revenueBar.style.width = `${Math.min(revenueGoal > 0 ? (totalGanhos / revenueGoal) * 100 : 0, 100)}%`;
-            const expenseBar = document.getElementById('expense-progress-bar');
-            const expenseProgress = expenseGoal > 0 ? (totalGastos / expenseGoal) * 100 : 0;
-            expenseBar.style.width = `${Math.min(expenseProgress, 100)}%`;
-            expenseBar.className = 'progress-bar';
-            if (expenseProgress >= 100) expenseBar.classList.add('danger');
-            else if (expenseProgress >= 90) expenseBar.classList.add('warning');
-            else expenseBar.classList.add('success');
-            this.checkAndSendNotifications({ totalGanhos, totalGastos });
-        },
-
-        calculateMonthlyTotals() {
-            const now = new Date();
-            const currentYear = now.getFullYear();
-            const currentMonth = now.getMonth();
-            const monthlyTransactions = transactions.filter(t => {
-                const transactionDate = new Date(t.date + 'T00:00:00');
-                return transactionDate.getFullYear() === currentYear && transactionDate.getMonth() === currentMonth;
-            });
-            const totalGanhos = monthlyTransactions.filter(t => t.type === 'ganho').reduce((acc, t) => acc + t.amount, 0);
-            const totalGastos = monthlyTransactions.filter(t => t.type === 'gasto').reduce((acc, t) => acc + t.amount, 0);
-            return { totalGanhos, totalGastos };
-        },
-        
-        updateSummary({ totalGanhos, totalGastos }) {
-            const saldo = totalGanhos - totalGastos;
-            document.getElementById('total-ganhos').textContent = this.formatCurrency(totalGanhos);
-            document.getElementById('total-gastos').textContent = this.formatCurrency(totalGastos);
-            document.getElementById('saldo-mes').textContent = this.formatCurrency(saldo);
-            document.getElementById('saldo-mes').className = saldo >= 0 ? 'positive' : 'negative';
-        },
-
-        renderTransactions() {
-            const list = document.getElementById('transaction-list');
-            list.innerHTML = '';
-            transactions.slice(0, 10).forEach(t => {
-                const isGasto = t.type === 'gasto';
-                const item = document.createElement('li');
-                item.className = 'transaction-item';
-                item.dataset.id = t.id;
-                item.innerHTML = `<div class="transaction-details"><div class="transaction-icon ${isGasto ? 'gasto' : 'ganho'}">${isGasto ? '🧾' : '💵'}</div><div><p class="description">${t.description}</p>${t.category ? `<span class="category-tag">${t.category}</span>` : ''}</div></div><div style="text-align:right;"><p class="transaction-amount ${isGasto ? 'negative' : 'positive'}">${this.formatCurrency(t.amount)}</p><button class="delete-btn" title="Excluir">🗑️</button></div>`;
-                list.appendChild(item);
-            });
-        },
-        
-        processDataForChart() {
-            const monthlyDataChart = {};
-            const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-            transactions.forEach(t => {
-                const date = new Date(t.date + 'T00:00:00');
-                const yearMonth = `${date.getFullYear()}-${String(date.getMonth()).padStart(2, '0')}`;
-                if (!monthlyDataChart[yearMonth]) monthlyDataChart[yearMonth] = { ganhos: 0, gastos: 0, label: `${monthNames[date.getMonth()]}/${date.getFullYear().toString().slice(-2)}` };
-                if (t.type === 'ganho') monthlyDataChart[yearMonth].ganhos += t.amount; else monthlyDataChart[yearMonth].gastos += t.amount;
-            });
-            const sortedKeys = Object.keys(monthlyDataChart).sort();
-            return {
-                labels: sortedKeys.map(key => monthlyDataChart[key].label),
-                ganhosData: sortedKeys.map(key => monthlyDataChart[key].ganhos),
-                gastosData: sortedKeys.map(key => monthlyDataChart[key].gastos)
-            };
-        },
-
-        renderOrUpdateChart() {
-            const { labels, ganhosData, gastosData } = this.processDataForChart();
-            const ctx = document.getElementById('monthly-chart').getContext('2d');
-            const isDarkMode = document.documentElement.classList.contains('dark-mode');
-            const style = getComputedStyle(document.documentElement);
-            if (monthlyChart) monthlyChart.destroy();
-            monthlyChart = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: 'Receitas', data: ganhosData, borderColor: style.getPropertyValue('--cor-sucesso').trim(), backgroundColor: 'rgba(46, 204, 113, 0.1)', fill: true, tension: 0.3 }, { label: 'Despesas', data: gastosData, borderColor: style.getPropertyValue('--cor-alerta').trim(), backgroundColor: 'rgba(231, 76, 60, 0.1)', fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { color: isDarkMode ? '#bdc3c7' : '#34495e' }, grid: { color: style.getPropertyValue('--cor-borda').trim() } }, x: { ticks: { color: isDarkMode ? '#bdc3c7' : '#34495e' }, grid: { color: 'transparent' } } }, plugins: { legend: { labels: { color: isDarkMode ? '#e5e9f0' : '#2c3e50' } }, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${this.formatCurrency(c.parsed.y)}` } } } } });
-        },
-
+        // ... (demais funções como saveGoals, addTransaction, etc., permanecem iguais) ...
+        saveGoals(e) { e.preventDefault(); const revenueGoal = parseFloat(document.getElementById('goal-revenue').value) || 0; const expenseGoal = parseFloat(document.getElementById('goal-expense').value) || 0; const monthId = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`; const goalsDocRef = doc(db, 'users', currentUser.uid, 'goals', monthId); setDoc(goalsDocRef, { revenue: revenueGoal, expense: expenseGoal }, { merge: true }).then(() => { this.Modal.close('goals-modal-overlay'); this.showToast('Metas salvas com sucesso!'); }).catch(error => this.showToast('Erro ao salvar metas.', 'error')); },
+        addTransaction(e) { e.preventDefault(); const newTransaction = { type: document.getElementById('transaction-type').value, description: document.getElementById('description').value, amount: parseFloat(document.getElementById('amount').value), date: document.getElementById('date').value || new Date().toISOString().slice(0, 10), category: document.getElementById('transaction-type').value === 'gasto' ? document.getElementById('category').value : null }; if (!newTransaction.description || isNaN(newTransaction.amount) || (newTransaction.type === 'gasto' && !newTransaction.category)) { return this.showToast("Preencha os campos obrigatórios.", "error"); } addDoc(collection(db, 'users', currentUser.uid, 'transactions'), newTransaction).then(() => { this.showToast('Transação adicionada com sucesso!'); const keepOpenCheckbox = document.getElementById('keep-modal-open'); if (keepOpenCheckbox.checked) { document.getElementById('description').value = ''; document.getElementById('amount').value = ''; document.getElementById('description').focus(); } else { this.Modal.close('transaction-modal-overlay'); } }).catch(error => this.showToast('Erro ao adicionar transação.', 'error')); },
+        removeTransaction(id) { if (confirm('Tem certeza que deseja excluir este lançamento?')) { deleteDoc(doc(db, 'users', currentUser.uid, 'transactions', id)).then(() => this.showToast('Lançamento excluído.', 'info')).catch(error => this.showToast('Erro ao excluir.', 'error')); } },
+        resetNotificationState() { notificationState = { expenseGoalExceeded: false, revenueGoalNear: false }; },
+        sendNotification(title, options = {}) { if (Notification.permission !== 'granted') return; new Notification(title, { icon: document.getElementById('favicon').href, ...options }); },
+        checkAndSendNotifications({ totalGanhos, totalGastos }) { const { revenue: revenueGoal, expense: expenseGoal } = monthlyGoals; if (expenseGoal > 0 && totalGastos >= expenseGoal && !notificationState.expenseGoalExceeded) { this.sendNotification("Alerta de Despesas!", { body: `Você ultrapassou seu limite de gastos de ${this.formatCurrency(expenseGoal)}!`, tag: 'expense-alert' }); notificationState.expenseGoalExceeded = true; } if (revenueGoal > 0 && totalGanhos < revenueGoal && !notificationState.revenueGoalNear && (totalGanhos / revenueGoal) >= 0.9) { const remaining = revenueGoal - totalGanhos; this.sendNotification("Meta de Receita Quase Lá!", { body: `Faltam apenas ${this.formatCurrency(remaining)} para atingir sua meta de ${this.formatCurrency(revenueGoal)}!`, tag: 'revenue-alert' }); notificationState.revenueGoalNear = true; } },
+        updateGoalsUI({ totalGanhos, totalGastos }) { const { revenue: revenueGoal, expense: expenseGoal } = monthlyGoals; document.getElementById('revenue-goal-text').textContent = `${this.formatCurrency(totalGanhos)} / ${this.formatCurrency(revenueGoal)}`; document.getElementById('expense-goal-text').textContent = `${this.formatCurrency(totalGastos)} / ${this.formatCurrency(expenseGoal)}`; const revenueBar = document.getElementById('revenue-progress-bar'); revenueBar.style.width = `${Math.min(revenueGoal > 0 ? (totalGanhos / revenueGoal) * 100 : 0, 100)}%`; const expenseBar = document.getElementById('expense-progress-bar'); const expenseProgress = expenseGoal > 0 ? (totalGastos / expenseGoal) * 100 : 0; expenseBar.style.width = `${Math.min(expenseProgress, 100)}%`; expenseBar.className = 'progress-bar'; if (expenseProgress >= 100) expenseBar.classList.add('danger'); else if (expenseProgress >= 90) expenseBar.classList.add('warning'); else expenseBar.classList.add('success'); this.checkAndSendNotifications({ totalGanhos, totalGastos }); },
+        calculateMonthlyTotals() { const now = new Date(); const currentYear = now.getFullYear(); const currentMonth = now.getMonth(); const monthlyTransactions = transactions.filter(t => { const transactionDate = new Date(t.date + 'T00:00:00'); return transactionDate.getFullYear() === currentYear && transactionDate.getMonth() === currentMonth; }); const totalGanhos = monthlyTransactions.filter(t => t.type === 'ganho').reduce((acc, t) => acc + t.amount, 0); const totalGastos = monthlyTransactions.filter(t => t.type === 'gasto').reduce((acc, t) => acc + t.amount, 0); return { totalGanhos, totalGastos }; },
+        updateSummary({ totalGanhos, totalGastos }) { const saldo = totalGanhos - totalGastos; document.getElementById('total-ganhos').textContent = this.formatCurrency(totalGanhos); document.getElementById('total-gastos').textContent = this.formatCurrency(totalGastos); document.getElementById('saldo-mes').textContent = this.formatCurrency(saldo); document.getElementById('saldo-mes').className = saldo >= 0 ? 'positive' : 'negative'; },
+        renderTransactions() { const list = document.getElementById('transaction-list'); list.innerHTML = ''; transactions.slice(0, 10).forEach(t => { const isGasto = t.type === 'gasto'; const item = document.createElement('li'); item.className = 'transaction-item'; item.dataset.id = t.id; item.innerHTML = `<div class="transaction-details"><div class="transaction-icon ${isGasto ? 'gasto' : 'ganho'}">${isGasto ? '🧾' : '💵'}</div><div><p class="description">${t.description}</p>${t.category ? `<span class="category-tag">${t.category}</span>` : ''}</div></div><div style="text-align:right;"><p class="transaction-amount ${isGasto ? 'negative' : 'positive'}">${this.formatCurrency(t.amount)}</p><button class="delete-btn" title="Excluir">🗑️</button></div>`; list.appendChild(item); }); },
+        processDataForChart() { const monthlyDataChart = {}; const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]; transactions.forEach(t => { const date = new Date(t.date + 'T00:00:00'); const yearMonth = `${date.getFullYear()}-${String(date.getMonth()).padStart(2, '0')}`; if (!monthlyDataChart[yearMonth]) monthlyDataChart[yearMonth] = { ganhos: 0, gastos: 0, label: `${monthNames[date.getMonth()]}/${date.getFullYear().toString().slice(-2)}` }; if (t.type === 'ganho') monthlyDataChart[yearMonth].ganhos += t.amount; else monthlyDataChart[yearMonth].gastos += t.amount; }); const sortedKeys = Object.keys(monthlyDataChart).sort(); return { labels: sortedKeys.map(key => monthlyDataChart[key].label), ganhosData: sortedKeys.map(key => monthlyDataChart[key].ganhos), gastosData: sortedKeys.map(key => monthlyDataChart[key].gastos) }; },
+        renderOrUpdateChart() { const { labels, ganhosData, gastosData } = this.processDataForChart(); const ctx = document.getElementById('monthly-chart').getContext('2d'); const isDarkMode = document.documentElement.classList.contains('dark-mode'); const style = getComputedStyle(document.documentElement); if (monthlyChart) monthlyChart.destroy(); monthlyChart = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: 'Receitas', data: ganhosData, borderColor: style.getPropertyValue('--cor-sucesso').trim(), backgroundColor: 'rgba(46, 204, 113, 0.1)', fill: true, tension: 0.3 }, { label: 'Despesas', data: gastosData, borderColor: style.getPropertyValue('--cor-alerta').trim(), backgroundColor: 'rgba(231, 76, 60, 0.1)', fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { color: isDarkMode ? '#bdc3c7' : '#34495e' }, grid: { color: style.getPropertyValue('--cor-borda').trim() } }, x: { ticks: { color: isDarkMode ? '#bdc3c7' : '#34495e' }, grid: { color: 'transparent' } } }, plugins: { legend: { labels: { color: isDarkMode ? '#e5e9f0' : '#2c3e50' } }, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${this.formatCurrency(c.parsed.y)}` } } } } }); },
         Modal: {
             open(modalId, type) {
                 const modal = document.getElementById(modalId);
                 if (modalId === 'pricing-modal-overlay') {
+                    App.togglePricingMode('simple'); // Reseta para o modo simples ao abrir
                     document.getElementById('pricing-result-container').classList.add('hidden');
                 }
-                if (modalId === 'transaction-modal-overlay') {
-                    modal.querySelector('#modal-title').textContent = type === 'ganho' ? 'Adicionar Receita' : 'Adicionar Despesa';
-                    modal.querySelector('#transaction-type').value = type;
-                    modal.querySelector('#category').parentElement.style.display = type === 'gasto' ? 'block' : 'none';
-                    modal.querySelector('#category').required = type === 'gasto';
-                } else if (modalId === 'goals-modal-overlay') {
-                    modal.querySelector('#goal-revenue').value = monthlyGoals.revenue || '';
-                    modal.querySelector('#goal-expense').value = monthlyGoals.expense || '';
-                }
+                if (modalId === 'transaction-modal-overlay') { modal.querySelector('#modal-title').textContent = type === 'ganho' ? 'Adicionar Receita' : 'Adicionar Despesa'; modal.querySelector('#transaction-type').value = type; modal.querySelector('#category').parentElement.style.display = type === 'gasto' ? 'block' : 'none'; modal.querySelector('#category').required = type === 'gasto'; } 
+                else if (modalId === 'goals-modal-overlay') { modal.querySelector('#goal-revenue').value = monthlyGoals.revenue || ''; modal.querySelector('#goal-expense').value = monthlyGoals.expense || ''; }
                 modal.classList.add('active');
             },
             close(modalId) {
                 const modal = document.getElementById(modalId);
-                if(modal) {
-                    modal.classList.remove('active');
-                    const form = modal.querySelector('form');
-                    if(form) form.reset();
-                }
+                if(modal) { modal.classList.remove('active'); const form = modal.querySelector('form'); if(form) form.reset(); }
             }
         },
-
-        handleListClick(e) {
-            if (e.target.classList.contains('delete-btn')) {
-                this.removeTransaction(e.target.closest('.transaction-item').dataset.id);
-            }
-        },
-
+        handleListClick(e) { if (e.target.classList.contains('delete-btn')) { this.removeTransaction(e.target.closest('.transaction-item').dataset.id); } },
         formatCurrency: (value) => (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
     };
     
     // --- EVENT LISTENERS SETUP ---
-    themeToggleBtn.addEventListener('click', () => {
-        document.documentElement.classList.toggle('dark-mode');
-        const isDarkMode = document.documentElement.classList.contains('dark-mode');
-        localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-        themeToggleBtn.textContent = isDarkMode ? '☀️' : '🌙';
-        if (monthlyChart) App.renderOrUpdateChart();
-    });
-
-    notificationPermissionLink.addEventListener('click', () => {
-        Notification.requestPermission().then(permission => {
-            if (permission === 'granted') App.sendNotification("Ótimo!", { body: "As notificações sobre suas metas estão ativas." });
-            notificationPermissionLink.classList.toggle('hidden', permission !== 'default' && permission !== 'denied');
-        });
-    });
-
-    function loadTransactions(userId) {
-        const q = query(collection(db, 'users', userId, 'transactions'), orderBy('date', 'desc'));
-        onSnapshot(q, (snapshot) => {
-            transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            App.updateUI();
-        });
-    }
-
-    function loadMonthlyGoals(userId) {
-        const monthId = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
-        const goalsDocRef = doc(db, 'users', userId, 'goals', monthId);
-        onSnapshot(goalsDocRef, (docSnap) => {
-            App.resetNotificationState();
-            monthlyGoals = docSnap.exists() ? docSnap.data() : { revenue: 0, expense: 0 };
-            App.updateUI();
-        });
-    }
-
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            currentUser = user;
-            document.getElementById('user-email').textContent = user.email;
-            loadTransactions(user.uid);
-            loadMonthlyGoals(user.uid);
-            notificationPermissionLink.classList.toggle('hidden', Notification.permission !== 'default' && Notification.permission !== 'denied');
-        } else { window.location.href = 'index.html'; }
-    });
-    
+    themeToggleBtn.addEventListener('click', () => { document.documentElement.classList.toggle('dark-mode'); const isDarkMode = document.documentElement.classList.contains('dark-mode'); localStorage.setItem('theme', isDarkMode ? 'dark' : 'light'); themeToggleBtn.textContent = isDarkMode ? '☀️' : '🌙'; if (monthlyChart) App.renderOrUpdateChart(); });
     document.getElementById('logout-btn').addEventListener('click', (e) => { e.preventDefault(); signOut(auth); });
+    document.querySelectorAll('.close-modal, .form-btn.cancel').forEach(btn => btn.addEventListener('click', () => App.Modal.close(btn.dataset.modalId)));
+    
+    // Listeners de transações e metas
     document.getElementById('add-gasto-btn').addEventListener('click', () => App.Modal.open('transaction-modal-overlay', 'gasto'));
     document.getElementById('add-ganho-btn').addEventListener('click', () => App.Modal.open('transaction-modal-overlay', 'ganho'));
     document.getElementById('set-goals-btn').addEventListener('click', () => App.Modal.open('goals-modal-overlay'));
-    document.getElementById('pricing-btn').addEventListener('click', () => App.Modal.open('pricing-modal-overlay'));
-
-    document.querySelectorAll('.close-modal, .form-btn.cancel').forEach(btn => btn.addEventListener('click', () => App.Modal.close(btn.dataset.modalId)));
-    
     document.getElementById('transaction-form').addEventListener('submit', (e) => App.addTransaction(e));
     document.getElementById('goals-form').addEventListener('submit', (e) => App.saveGoals(e));
-    document.getElementById('pricing-form').addEventListener('submit', (e) => App.calculatePrice(e));
-
     document.getElementById('transaction-list').addEventListener('click', (e) => App.handleListClick(e));
+    
+    // NOVO: Listeners para precificação avançada
+    document.getElementById('pricing-btn').addEventListener('click', () => App.Modal.open('pricing-modal-overlay'));
+    document.getElementById('pricing-form').addEventListener('submit', (e) => App.calculatePrice(e));
+    document.getElementById('pricing-mode-simple').addEventListener('click', () => App.togglePricingMode('simple'));
+    document.getElementById('pricing-mode-advanced').addEventListener('click', () => App.togglePricingMode('advanced'));
+    document.getElementById('add-component-btn').addEventListener('click', () => App.addComponentRow());
+    componentList.addEventListener('click', (e) => {
+        if (e.target.classList.contains('remove-component-btn')) {
+            e.target.closest('.component-item').remove();
+            App.updateTotalFixedCost();
+        }
+    });
+    componentList.addEventListener('input', (e) => {
+        if (e.target.classList.contains('component-qty') || e.target.classList.contains('component-cost')) {
+            App.updateTotalFixedCost();
+        }
+    });
+    
+    onAuthStateChanged(auth, (user) => { if (user) { currentUser = user; document.getElementById('user-email').textContent = user.email; loadTransactions(user.uid); loadMonthlyGoals(user.uid); } else { window.location.href = 'index.html'; } });
+    function loadTransactions(userId) { const q = query(collection(db, 'users', userId, 'transactions'), orderBy('date', 'desc')); onSnapshot(q, (snapshot) => { transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); App.updateUI(); }); }
+    function loadMonthlyGoals(userId) { const monthId = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`; const goalsDocRef = doc(db, 'users', userId, 'goals', monthId); onSnapshot(goalsDocRef, (docSnap) => { App.resetNotificationState(); monthlyGoals = docSnap.exists() ? docSnap.data() : { revenue: 0, expense: 0 }; App.updateUI(); }); }
   });
 </script>
 </body>
