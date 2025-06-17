@@ -76,7 +76,8 @@
         .form-group { margin-bottom: 1rem; }
         .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-        .form-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
+        /* ALTERADO: Ajustes para acomodar o novo checkbox */
+        .form-actions { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: 1.5rem; }
         .form-btn { padding: 0.8rem 1.5rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 500; cursor: pointer; transition: var(--transicao-suave); }
         .form-btn.save { background-color: var(--cor-sucesso); color: white; } .form-btn.cancel { background-color: #e0e0e0; color: var(--cor-texto); }
         html.dark-mode .form-btn.cancel { background-color: #3a4a64; color: var(--cor-primaria); }
@@ -87,6 +88,10 @@
         .toast.success { border-color: var(--cor-sucesso); } .toast.success .toast-icon { color: var(--cor-sucesso); }
         .toast.info { border-color: var(--cor-secundaria); } .toast.info .toast-icon { color: var(--cor-secundaria); }
         .toast.error { border-color: var(--cor-alerta); } .toast.error .toast-icon { color: var(--cor-alerta); }
+        /* NOVO: Estilos para a opção de manter aberto */
+        .keep-open-option { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--cor-texto); cursor: pointer; }
+        .keep-open-option input[type="checkbox"] { width: auto; cursor: pointer; }
+        .form-actions-buttons { display: flex; gap: 1rem; }
         @keyframes toastIn { to { opacity: 1; transform: translateX(0); } }
         @keyframes toastOut { to { opacity: 0; transform: translateX(100%); } }
         @media (max-width: 600px) { .chart-container { height: 250px; } }
@@ -123,7 +128,19 @@
     <div id="toast-container"></div>
 
     <div class="modal-overlay" id="transaction-modal-overlay">
-        <div class="modal-content"><div class="modal-header"><h2 id="modal-title"></h2><button class="close-modal" data-modal-id="transaction-modal-overlay">×</button></div><form id="transaction-form"><input type="hidden" id="transaction-type"><div class="form-group"><label for="description">Descrição</label><input type="text" id="description" required></div><div class="form-group"><label for="amount">Valor</label><input type="number" id="amount" step="0.01" required></div><div class="form-group"><label for="category">Categoria</label><select id="category" required><option value="" disabled selected>Selecione...</option><option value="Fixas">Contas Fixas</option><option value="Fornecedores">Fornecedores</option><option value="Marketing">Marketing</option><option value="Pessoal">Pessoal / Salários</option><option value="Impostos">Impostos</option><option value="Outros">Outras Despesas</option></select></div><div class="form-group"><label for="date">Data (opcional)</label><input type="date" id="date"></div><div class="form-actions"><button type="button" class="form-btn cancel" data-modal-id="transaction-modal-overlay">Cancelar</button><button type="submit" class="form-btn save">Salvar</button></div></form></div>
+        <div class="modal-content"><div class="modal-header"><h2 id="modal-title"></h2><button class="close-modal" data-modal-id="transaction-modal-overlay">×</button></div><form id="transaction-form"><input type="hidden" id="transaction-type"><div class="form-group"><label for="description">Descrição</label><input type="text" id="description" required></div><div class="form-group"><label for="amount">Valor</label><input type="number" id="amount" step="0.01" required></div><div class="form-group"><label for="category">Categoria</label><select id="category" required><option value="" disabled selected>Selecione...</option><option value="Fixas">Contas Fixas</option><option value="Fornecedores">Fornecedores</option><option value="Marketing">Marketing</option><option value="Pessoal">Pessoal / Salários</option><option value="Impostos">Impostos</option><option value="Outros">Outras Despesas</option></select></div><div class="form-group"><label for="date">Data (opcional)</label><input type="date" id="date"></div>
+            <div class="form-actions">
+                <!-- NOVO: Checkbox para manter o modal aberto -->
+                <label class="keep-open-option">
+                    <input type="checkbox" id="keep-modal-open">
+                    Manter aberto para novo lançamento
+                </label>
+                <div class="form-actions-buttons">
+                    <button type="button" class="form-btn cancel" data-modal-id="transaction-modal-overlay">Cancelar</button>
+                    <button type="submit" class="form-btn save">Salvar</button>
+                </div>
+            </div>
+        </form></div>
     </div>
     
     <div class="modal-overlay" id="goals-modal-overlay">
@@ -198,7 +215,8 @@
                 })
                 .catch(error => this.showToast('Erro ao salvar metas.', 'error'));
         },
-
+        
+        // ALTERADO: Lógica para manter o modal aberto se a opção estiver marcada
         addTransaction(e) {
             e.preventDefault();
             const newTransaction = {
@@ -211,10 +229,24 @@
             if (!newTransaction.description || isNaN(newTransaction.amount) || (newTransaction.type === 'gasto' && !newTransaction.category)) {
                 return this.showToast("Preencha os campos obrigatórios.", "error");
             }
+
             addDoc(collection(db, 'users', currentUser.uid, 'transactions'), newTransaction)
                 .then(() => {
-                    this.Modal.close('transaction-modal-overlay');
                     this.showToast('Transação adicionada com sucesso!');
+                    const keepOpenCheckbox = document.getElementById('keep-modal-open');
+                    
+                    if (keepOpenCheckbox.checked) {
+                        // Limpa os campos para o próximo lançamento, mas mantém o modal aberto
+                        document.getElementById('description').value = '';
+                        document.getElementById('amount').value = '';
+                        // Opcional: limpa outros campos se desejar
+                        // document.getElementById('date').value = '';
+                        // document.getElementById('category').selectedIndex = 0;
+                        document.getElementById('description').focus(); // Foca no primeiro campo para agilizar
+                    } else {
+                        // Comportamento original: fecha o modal
+                        this.Modal.close('transaction-modal-overlay');
+                    }
                 })
                 .catch(error => this.showToast('Erro ao adicionar transação.', 'error'));
         },
